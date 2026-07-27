@@ -1,5 +1,21 @@
 
 
+def format(expresion):
+    operadores = ['|', '?', '*', '+', '^']
+    operadoresBinarios = ['|', '^']
+    formatted = ""
+
+    for i in range(len(expresion)):
+        p1 = expresion[i]
+        formatted += p1 #escribir el caracter actual
+
+        #insertar . si se agrega otro caracter que no sea operador
+        if i + 1 < len(expresion):
+            p2 = expresion[i + 1]
+            if (p1 != '(' and p2 != ')' and p2 not in operadores and p1 not in operadoresBinarios):
+                formatted += '.'
+
+    return formatted
 
 def read_file(filename):
     try:
@@ -9,7 +25,8 @@ def read_file(filename):
 
                 if not expresion:
                     continue
-                print (f"Expresión: {expresion}")
+                print (f"Expresión: {expresion} -> Formateada: {format(expresion)}")
+                
 
     except FileNotFoundError:
         print(f"Error 404: El archivo '{filename}' no existe.")
@@ -29,6 +46,8 @@ if __name__ == "__main__":
             if not filename.lower().endswith('.txt'):
                 filename += '.txt'
             read_file(filename)
+
+
 
         elif opcion == '2':
             print("Saliendo del programa.")
