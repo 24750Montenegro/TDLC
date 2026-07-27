@@ -17,6 +17,46 @@ def format(expresion):
 
     return formatted
 
+
+def precedence(p):
+    #jerarquia de precedencia de los operadores
+    precedences = {
+        '(': 1,
+        '|': 2,   
+        '.': 3,   
+        '?': 4,   
+        '*': 4,
+        '+': 4,
+        '^': 5,  
+    }
+
+    #retornar la precedencia del operador, si no se encuentra en el diccionario, retornar 6 (precedencia más baja)
+    return precedences.get(p, 6)
+
+def infix_to_postfix(expresion):
+    postfix = ""
+    stack = []
+    formatted = format(expresion)
+
+    for char in formatted:
+        if char == '(':
+            stack.append(char)
+        elif char == ')':
+            while stack and stack[-1] != '(':
+                postfix += stack.pop()
+            if stack:
+                stack.pop()  # quitar el '('
+        else:
+            while stack and precedence(stack[-1]) >= precedence(char):
+                postfix += stack.pop()
+            
+            stack.append(char)
+
+    while stack:
+        postfix += stack.pop()
+
+    return postfix
+
 def read_file(filename):
     try:
         with open(filename, 'r', encoding='utf-8') as file:
@@ -26,7 +66,7 @@ def read_file(filename):
                 if not expresion:
                     continue
                 print (f"Expresión: {expresion} -> Formateada: {format(expresion)}")
-                
+                print(f"Expresión en notación posfija: {infix_to_postfix(expresion)}")
 
     except FileNotFoundError:
         print(f"Error 404: El archivo '{filename}' no existe.")
