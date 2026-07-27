@@ -1,18 +1,27 @@
 
 
+operadoresUnarios = ['?', '*', '+']
+operadoresBinarios = ['|', '.', '^']
+operadores = operadoresUnarios + operadoresBinarios
+
+
 def format(expresion):
-    operadores = ['|', '?', '*', '+', '^']
-    operadoresBinarios = ['|', '^']
     formatted = ""
 
     for i in range(len(expresion)):
         p1 = expresion[i]
         formatted += p1 #escribir el caracter actual
 
-        #insertar . si se agrega otro caracter que no sea operador
+        #insertar . solo si p1 cierra una subexpresion y p2 abre otra
         if i + 1 < len(expresion):
             p2 = expresion[i + 1]
-            if (p1 != '(' and p2 != ')' and p2 not in operadores and p1 not in operadoresBinarios):
+
+            #cierran: operando, ')' y los unarios postfijos
+            cierra = p1 == ')' or p1 in operadoresUnarios or (p1 != '(' and p1 not in operadoresBinarios)
+            #abren: operando y '('
+            abre = p2 == '(' or (p2 != ')' and p2 not in operadores)
+
+            if cierra and abre:
                 formatted += '.'
 
     return formatted
@@ -22,16 +31,16 @@ def precedence(p):
     #jerarquia de precedencia de los operadores
     precedences = {
         '(': 1,
-        '|': 2,   
-        '.': 3,   
-        '?': 4,   
-        '*': 4,
-        '+': 4,
-        '^': 5,  
+        '|': 2,
+        '.': 3,
+        '^': 4,   #binario: debe quedar por debajo de los unarios postfijos
+        '?': 5,
+        '*': 5,
+        '+': 5,
     }
 
-    #retornar la precedencia del operador, si no se encuentra en el diccionario, retornar 6 (precedencia más baja)
-    return precedences.get(p, 6)
+    #los operandos ya no pasan por aqui, cualquier otra cosa es precedencia minima
+    return precedences.get(p, 0)
 
 def infix_to_postfix(expresion):
     postfix = ""
@@ -44,16 +53,22 @@ def infix_to_postfix(expresion):
         elif char == ')':
             while stack and stack[-1] != '(':
                 postfix += stack.pop()
-            if stack:
-                stack.pop()  # quitar el '('
-        else:
-            while stack and precedence(stack[-1]) >= precedence(char):
+            if not stack:
+                raise ValueError("paréntesis ')' sin '(' que lo abra")
+            stack.pop()  # quitar el '('
+        elif char in operadores:
+            while stack and stack[-1] != '(' and precedence(stack[-1]) >= precedence(char):
                 postfix += stack.pop()
-            
+
             stack.append(char)
+        else:
+            postfix += char  #los operandos van directo a la salida
 
     while stack:
-        postfix += stack.pop()
+        op = stack.pop()
+        if op == '(':
+            raise ValueError("paréntesis '(' sin cerrar")
+        postfix += op
 
     return postfix
 
@@ -65,8 +80,11 @@ def read_file(filename):
 
                 if not expresion:
                     continue
-                print (f"Expresión: {expresion} -> Formateada: {format(expresion)}")
-                print(f"Expresión en notación posfija: {infix_to_postfix(expresion)}")
+                try:
+                    print (f"Expresión: {expresion:<20} - Formateada(infix): {format(expresion):<20} - Postfix: {infix_to_postfix(expresion)}")
+                    
+                except ValueError as e:
+                    print(f"Expresión inválida '{expresion}': {e}")
 
     except FileNotFoundError:
         print(f"Error 404: El archivo '{filename}' no existe.")
