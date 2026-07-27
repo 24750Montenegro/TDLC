@@ -139,11 +139,17 @@ def precedence(p):
     return precedences.get(p, 0)
 
 
-def infix_to_postfix(expresion):
+def procesar(expresion):
+    #devuelve (postfix, pasos); cada paso es (token, pila, salida)
     postfix = ""
     stack = []
+    pasos = []
     protegida, literales = preparar(expresion)
     formatted = insertar_concatenacion(protegida)
+
+    def anotar(token):
+        pasos.append((desproteger(token, literales), ''.join(stack),
+                      desproteger(postfix, literales)))
 
     for char in formatted:
         if char in abren:
@@ -164,16 +170,34 @@ def infix_to_postfix(expresion):
         else:
             postfix += char
 
+        anotar(char)
+
     while stack:
         op = stack.pop()
         if op in abren:
             raise ValueError(f"'{op}' sin cerrar")
         postfix += op
+        anotar(op)
 
-    return desproteger(postfix, literales)
+    return desproteger(postfix, literales), pasos
 
 
-def read_file(filename):
+def infix_to_postfix(expresion):
+    return procesar(expresion)[0]
+
+
+def imprimir_pasos(expresion):
+    postfix, pasos = procesar(expresion)
+
+    print(f"Expresión:        {expresion}")
+    print(f"Infix formateado: {format(expresion)}")
+    print(f"  {'#':>3}  {'Token':<6} {'Pila':<12} Salida")
+    for n, (token, stack, salida) in enumerate(pasos, 1):
+        print(f"  {n:>3}  {token:<6} {stack:<12} {salida}")
+    print(f"Postfix: {postfix}\n")
+
+
+def read_file(filename, pasos=False):
     try:
         with open(filename, 'r', encoding='utf-8') as file:
             for line in file:
@@ -182,7 +206,10 @@ def read_file(filename):
                 if not expresion:
                     continue
                 try:
-                    print(f"Expresión: {expresion:<20} - Formateada(infix): {format(expresion):<20} - Postfix: {infix_to_postfix(expresion)}")
+                    if pasos:
+                        imprimir_pasos(expresion)
+                    else:
+                        print(f"Expresión: {expresion:<20} - Formateada(infix): {format(expresion):<20} - Postfix: {infix_to_postfix(expresion)}")
                 except ValueError as e:
                     print(f"Expresión inválida '{expresion}': {e}")
 
@@ -191,21 +218,21 @@ def read_file(filename):
 
 
 if __name__ == "__main__":
-    opcion = 0
-    while opcion != 2:
+    while True:
         print("Menú:")
         print("1. Leer archivo")
-        print("2. Salir")
+        print("2. Leer archivo paso a paso")
+        print("3. Salir")
         opcion = input("Seleccione una opción: ")
 
-        if opcion == '1':
+        if opcion in ('1', '2'):
             filename = input("Ingrese el nombre del archivo: ")
             if not filename.lower().endswith('.txt'):
                 filename += '.txt'
-            read_file(filename)
+            read_file(filename, pasos=(opcion == '2'))
 
-        elif opcion == '2':
+        elif opcion == '3':
             print("Saliendo del programa.")
             break
         else:
-            print("Opción inválida. Por favor, seleccione 1 o 2.")
+            print("Opción inválida. Por favor, seleccione 1, 2 o 3.")
