@@ -219,10 +219,12 @@ def read_file(filename, pasos=False):
 
 if __name__ == "__main__":
     while True:
-        print("Menú:")
+        print("\n========Menú==========")
         print("1. Leer archivo")
         print("2. Leer archivo paso a paso")
         print("3. Salir")
+        print("=======================")
+        print()
         opcion = input("Seleccione una opción: ")
 
         if opcion in ('1', '2'):
