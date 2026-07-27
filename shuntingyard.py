@@ -5,7 +5,7 @@ def read_file(filename):
     try:
         with open(filename, 'r', encoding='utf-8') as file:
             for line in file:
-                expresion = line.strip()
+                expresion = line.strip() #limpiar espacios en blanco al inicio y al final de la línea
 
                 if not expresion:
                     continue
@@ -25,12 +25,11 @@ if __name__ == "__main__":
 
         if opcion == '1':
             filename = input("Ingrese el nombre del archivo: ")
+            ## si no se agrega extension al nombre del archivo, se agrega .txt por defecto
+            if not filename.lower().endswith('.txt'):
+                filename += '.txt'
             read_file(filename)
 
-            ## si no se agrega extension al nombre del archivo, se agrega .txt por defecto
-            if not filename.endswith('.txt'):
-                filename += '.txt'
-            
         elif opcion == '2':
             print("Saliendo del programa.")
             break
