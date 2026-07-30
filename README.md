@@ -7,6 +7,10 @@ Dos programas independientes, cada uno con su propio menú y su propio archivo d
 - **`Balanceo.py`** (ejercicio 2) — verifica el balanceo de `()`, `[]` y `{}` con una pila,
   mostrando la traza paso a paso.
 
+## Video de ejecución
+
+Demostración de ambos programas corriendo: **https://youtu.be/dZ4LygP9FF8**
+
 ## Requisitos
 
 - Python 3 (sin dependencias externas)
