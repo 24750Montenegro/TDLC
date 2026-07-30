@@ -1,12 +1,17 @@
 # Shunting Yard — Infix a Postfix
 
-Convierte expresiones regulares de notación infija a postfija usando el algoritmo Shunting Yard de Dijkstra.
+Dos programas independientes, cada uno con su propio menú y su propio archivo de pruebas:
+
+- **`shuntingyard.py`** (ejercicio 3) — convierte expresiones regulares de notación infija
+  a postfija usando el algoritmo Shunting Yard de Dijkstra.
+- **`Balanceo.py`** (ejercicio 2) — verifica el balanceo de `()`, `[]` y `{}` con una pila,
+  mostrando la traza paso a paso.
 
 ## Requisitos
 
 - Python 3 (sin dependencias externas)
 
-## Cómo ejecutarlo
+## Cómo ejecutar el Shunting Yard
 
 El repositorio ya incluye `expresiones.txt` con expresiones de prueba listas para usar (las listadas en el inciso 1).
 
@@ -97,7 +102,69 @@ la siguiente línea. Se detectan, entre otros:
 - subexpresión vacía `()` o clase vacía `[]`
 - `\` al final de la expresión
 
+## Cómo ejecutar el verificador de balanceo
+
+`Balanceo.py` resuelve el ejercicio 2. El repositorio incluye `ejercicio2.txt` con las
+expresiones de prueba de ese inciso (varias están deliberadamente desbalanceadas).
+
+```
+python Balanceo.py
+```
+
+Aparece un menú:
+
+```
+========== Ejercicio 2: Verificador de balanceo ==========
+1. Leer el  archivo y verificar balanceo
+2. Salir
+```
+
+Después de elegir 1 pide el nombre del archivo. Escriba `ejercicio2.txt`, o basta con
+`ejercicio2`: la extensión `.txt` se agrega sola. Por cada línea imprime la traza completa
+de la pila y el veredicto.
+
+### Salida esperada
+
+```
+Expresion: (a{b})
+    #  Pos  Token  Accion                                        Pila
+    1    0   (      PUSH  '('                                     (
+    2    1   a      no es simbolo de interes                      (
+    3    2   {      PUSH  '{'                                     ({
+    4    3   b      no es simbolo de interes                      ({
+    5    4   }      POP   '{' (cierra con '}')                    (
+    6    5   )      POP   '(' (cierra con ')')
+>> Resultado: BIEN BALANCEADA
+
+Expresion: (a|b]
+    #  Pos  Token  Accion                                        Pila
+    1    0   (      PUSH  '('                                     (
+    2    1   a      no es simbolo de interes                      (
+    3    2   |      no es simbolo de interes                      (
+    4    3   b      no es simbolo de interes                      (
+    5    4   ]      error: se esperaba cierre de '(', llego ']'   (
+>> Resultado: NO BALANCEADA -> ']' en la posicion 4 no coincide con el simbolo en el tope de la pila ('(')
+```
+
+### Detalles
+
+- Se verifican los tres pares: `()`, `[]` y `{}`. Cualquier otro caracter no toca la pila.
+- Los caracteres escapados con `\` se ignoran: en `\(a\)` no hay nada que balancear.
+- La traza se corta en el primer error. Un símbolo de apertura que nunca se cierra se
+  reporta al final: *"quedaron simbolos sin cerrar en la pila"*.
+
+> **Nota.** A diferencia de `shuntingyard.py`, este verificador no interpreta clases de
+> caracteres: `[({]` se reporta como no balanceada, aunque el shunting yard la aceptaría
+> como una clase que contiene `(` y `{`. Es intencional — el ejercicio 2 es un verificador
+> de balanceo genérico, no un parser de expresiones regulares.
+
+Las llaves `{}` solo son significativas aquí. En `shuntingyard.py` son símbolos literales
+del alfabeto (no agrupan y no son cuantificador `{n,m}`), así que `a{2,3}` se convierte sin
+error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este programa y no allá.
+
 ## Estructura
 
-- `shuntingyard.py` — implementación completa y menú interactivo.
-- `expresiones.txt` — expresiones de ejemplo.
+- `shuntingyard.py` — ejercicio 3: implementación completa y menú interactivo.
+- `expresiones.txt` — expresiones de ejemplo para el ejercicio 3.
+- `Balanceo.py` — ejercicio 2: verificador de balanceo con traza de la pila.
+- `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2.
