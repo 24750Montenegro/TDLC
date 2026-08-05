@@ -139,8 +139,10 @@ def precedence(p):
     return precedences.get(p, 0)
 
 
-def procesar(expresion):
-    #devuelve (postfix, pasos); cada paso es (token, pila, salida)
+def procesar_protegido(expresion):
+    #devuelve (postfix con los literales aun protegidos, literales, pasos);
+    #cada paso es (token, pila, salida). El postfix protegido tiene un caracter
+    #por token, que es lo que necesita el constructor del AST
     postfix = ""
     stack = []
     pasos = []
@@ -179,6 +181,12 @@ def procesar(expresion):
         postfix += op
         anotar(op)
 
+    return postfix, literales, pasos
+
+
+def procesar(expresion):
+    #devuelve (postfix legible, pasos)
+    postfix, literales, pasos = procesar_protegido(expresion)
     return desproteger(postfix, literales), pasos
 
 
@@ -219,22 +227,28 @@ def read_file(filename, pasos=False):
 
 if __name__ == "__main__":
     while True:
-        print("\n========Menú==========")
+        print("\n=============Menú=============")
         print("1. Leer archivo")
         print("2. Leer archivo paso a paso")
-        print("3. Salir")
-        print("=======================")
+        print("3. Leer archivo y graficar el AST")
+        print("4. Salir")
+        print("==============================")
         print()
         opcion = input("Seleccione una opción: ")
 
-        if opcion in ('1', '2'):
+        if opcion in ('1', '2', '3'):
             filename = input("Ingrese el nombre del archivo: ")
             if not filename.lower().endswith('.txt'):
                 filename += '.txt'
-            read_file(filename, pasos=(opcion == '2'))
 
-        elif opcion == '3':
+            if opcion == '3':
+                from arbol import graficar_archivo
+                graficar_archivo(filename)
+            else:
+                read_file(filename, pasos=(opcion == '2'))
+
+        elif opcion == '4':
             print("Saliendo del programa.")
             break
         else:
-            print("Opción inválida. Por favor, seleccione 1, 2 o 3.")
+            print("Opción inválida. Por favor, seleccione 1, 2, 3 o 4.")

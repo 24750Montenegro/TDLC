@@ -13,7 +13,13 @@ Demostración de ambos programas corriendo: **https://youtu.be/dZ4LygP9FF8**
 
 ## Requisitos
 
-- Python 3 (sin dependencias externas)
+- Python 3
+- `svgling` (Python puro, no necesita ningún binario aparte). Solo lo usa la opción 3
+  del menú, la que dibuja el AST:
+
+```
+pip install -r requirements.txt
+```
 
 ## Cómo ejecutar el Shunting Yard
 
@@ -29,7 +35,8 @@ Aparece un menú:
 Menú:
 1. Leer archivo
 2. Leer archivo paso a paso
-3. Salir
+3. Leer archivo y graficar el AST
+4. Salir
 Seleccione una opción:
 ```
 
@@ -37,9 +44,12 @@ Seleccione una opción:
   expresión formateada (con las concatenaciones `.` explícitas) y el postfix.
 - **Opción 2** — lo mismo, pero además muestra la traza paso a paso del algoritmo
   (token leído, contenido de la pila y salida parcial en cada iteración).
-- **Opción 3** — salir.
+- **Opción 3** — lo mismo que la opción 1 y además guarda un `.svg` por expresión en la
+  carpeta `ast/` (`ast_1.svg`, `ast_2.svg`, …) con su árbol sintáctico. Los `a+` y `a?`
+  se dibujan ya expandidos como `a.a*` y `a|ε`.
+- **Opción 4** — salir.
 
-Después de elegir 1 o 2 pide el nombre del archivo. Escriba:
+Después de elegir 1, 2 o 3 pide el nombre del archivo. Escriba:
 
 ```
 expresiones.txt
