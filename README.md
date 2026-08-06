@@ -2,19 +2,28 @@
 
 Dos programas independientes, cada uno con su propio menú y su propio archivo de pruebas:
 
-- **`shuntingyard.py`** (ejercicio 3) — convierte expresiones regulares de notación infija
+- **`shuntingyard.py`**  — convierte expresiones regulares de notación infija
   a postfija usando el algoritmo Shunting Yard de Dijkstra.
-- **`Balanceo.py`** (ejercicio 2) — verifica el balanceo de `()`, `[]` y `{}` con una pila,
+- **`Balanceo.py`**  — verifica el balanceo de `()`, `[]` y `{}` con una pila,
   mostrando la traza paso a paso.
 
-## Video de ejecución
+- **`arbol.py`**  — construye el AST (árbol sintáctico) a partir del postfix y lo dibuja
+  en SVG. No tiene menú propio: lo llama la opción 3 de `shuntingyard.py`.
 
-Demostración de ambos programas corriendo: **https://youtu.be/dZ4LygP9FF8**
+## Video de ejecución
+Demostración de  programas corriendo:
+
+#### Lab 2 - Balanceo y ShuntingYard
+
+ **https://youtu.be/dZ4LygP9FF8**
+
+#### Lab 3 - Generación de AST's
+**https://youtu.be/ZuII4VVMHmY**
 
 ## Requisitos
 
 - Python 3
-- `svgling` (Python puro, no necesita ningún binario aparte). Solo lo usa la opción 3
+- `svgling`. Solo lo usa `arbol.py`, es decir la opción 3
   del menú, la que dibuja el AST:
 
 ```
@@ -23,7 +32,7 @@ pip install -r requirements.txt
 
 ## Cómo ejecutar el Shunting Yard
 
-El repositorio ya incluye `expresiones.txt` con expresiones de prueba listas para usar (las listadas en el inciso 1).
+El repositorio ya incluye `expresiones.txt` con expresiones de prueba
 
 ```
 python shuntingyard.py
@@ -46,7 +55,7 @@ Seleccione una opción:
   (token leído, contenido de la pila y salida parcial en cada iteración).
 - **Opción 3** — lo mismo que la opción 1 y además guarda un `.svg` por expresión en la
   carpeta `ast/` (`ast_1.svg`, `ast_2.svg`, …) con su árbol sintáctico. Los `a+` y `a?`
-  se dibujan ya expandidos como `a.a*` y `a|ε`.
+  se dibujan ya expandidos como `a.a*` y `a|ε`. De esto se encarga `arbol.py`.
 - **Opción 4** — salir.
 
 Después de elegir 1, 2 o 3 pide el nombre del archivo. Escriba:
@@ -116,6 +125,63 @@ la siguiente línea. Se detectan, entre otros:
 - subexpresión vacía `()` o clase vacía `[]`
 - `\` al final de la expresión
 
+## Cómo se construye el AST (`arbol.py`)
+
+La opción 3 pasa por `arbol.py`. El módulo no reimplementa el algoritmo: toma el postfix
+que ya produjo `shuntingyard.py` y lo recorre con una pila, un caracter a la vez.
+
+- un operando apila una hoja;
+- un operador unario (`*`, `+`, `?`) desapila un nodo y lo cuelga como su único hijo;
+- un operador binario (`|`, `.`, `^`) desapila dos y los cuelga como hijo izquierdo y
+  derecho (el primero en salir es el derecho).
+
+Al terminar debe quedar exactamente un nodo en la pila: la raíz. Si queda más de uno, o si
+a un operador le faltan operandos, se reporta la expresión como inválida y se sigue con la
+siguiente línea, igual que en las otras opciones.
+
+### Expansión de `+` y `?`
+
+Por defecto los dos azúcares sintácticos se dibujan con los operadores básicos:
+
+| Escrito | Dibujado |
+|---|---|
+| `a+` | `a·a*` |
+| `a?` | `a\|ε` |
+
+Por eso el árbol de `(a|b)+` tiene dos copias del subárbol `a|b`, y su recorrido en
+postorden da `ab|ab|*.` aunque el postfix impreso sea `ab|+`. Con `expandir=False` se
+dibuja el nodo `+` o `?` tal cual, sin expandir.
+
+### El dibujo
+
+- La concatenación se pinta como `·`: un punto en la línea base se pierde entre las aristas.
+  El `\.` literal no cambia, y los demás caracteres escapados también conservan su `\`.
+- Los operadores van en rojo y negrita, los operandos en verde oliva, el `ε` en verde y las
+  aristas en azul.
+- Se guarda un `.svg` por expresión en `ast/`, numerados en el orden del archivo
+  (`ast_1.svg`, `ast_2.svg`, …). La carpeta se crea sola y los archivos se sobrescriben en
+  cada corrida; las expresiones inválidas no generan archivo, así que la numeración
+  corresponde solo a las expresiones válidas.
+
+### Usarlo desde Python
+
+Las tres funciones útiles si quiere llamarlo directamente:
+
+```python
+from arbol import arbol_de, dibujar, graficar_archivo
+
+postfix, raiz = arbol_de("(a|b)+")   # postfix legible + raíz del AST
+raiz.postorden()                     # 'ab|ab|*.'  (ya expandido)
+dibujar(raiz).saveas("mi_arbol.svg")
+
+graficar_archivo("expresiones.txt")  # exactamente lo que hace la opción 3
+```
+
+`arbol_de(expresion, expandir=True)` y
+`graficar_archivo(filename, expandir=True, carpeta_salida="ast")` aceptan `expandir=False`
+para dejar los `+` y `?` sin expandir, y `carpeta_salida` para cambiar el destino
+de los `.svg`.
+
 ## Cómo ejecutar el verificador de balanceo
 
 `Balanceo.py` resuelve el ejercicio 2. El repositorio incluye `ejercicio2.txt` con las
@@ -178,7 +244,11 @@ error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este progra
 
 ## Estructura
 
-- `shuntingyard.py` — ejercicio 3: implementación completa y menú interactivo.
-- `expresiones.txt` — expresiones de ejemplo para el ejercicio 3.
-- `Balanceo.py` — ejercicio 2: verificador de balanceo con traza de la pila.
-- `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2.
+- `shuntingyard.py` — ejercicio 3 Lab 2: implementación completa y menú interactivo.
+- `expresiones.txt` — expresiones de ejemplo para el ejercicio 3 Lab 2.
+- `arbol.py` — construcción y dibujo del AST a partir del postfix Lab 3.
+- `ast/` — carpeta donde la opción 3 guarda los `.svg`.
+- `Balanceo.py` — ejercicio 2 Lab 2: verificador de balanceo con traza de la pila.
+- `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
+- `requirements.txt` — dependencias (`svgling`).
+- `doc/` — PDFs de los ejercicios escritos.
