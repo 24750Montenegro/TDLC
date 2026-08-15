@@ -1,7 +1,21 @@
 
+import os
+import shutil
 from collections import deque
 
-from arbol import EPSILON, arbol_de
+from graphviz import Digraph
+
+from arbol import (EPSILON, arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
+                   COLOR_OPERADOR, COLOR_LINEA)
+
+FUENTE_GRAFO = "Consolas"
+FLECHA_INICIAL = "__inicio__"
+
+COLOR_ESTADO = "#334155"
+COLOR_INICIAL = COLOR_LINEA
+COLOR_ACEPTACION = COLOR_EPSILON
+COLOR_SIMBOLO = COLOR_OPERANDO
+COLOR_TITULO = COLOR_OPERADOR
 
 
 class AFN:
@@ -173,3 +187,68 @@ def simular(afn, w):
 
 def acepta(expresion, w, expandir=True):
     return simular(afn_de(expresion, expandir)[1], w)[0]
+
+
+#---Dibujo del AFN
+
+def _asegurar_dot():
+    #el instalador de Graphviz en Windows no siempre deja dot en el PATH
+    if shutil.which('dot'):
+        return
+    for carpeta in (r"C:\Program Files\Graphviz\bin",
+                    r"C:\Program Files (x86)\Graphviz\bin"):
+        if os.path.isfile(os.path.join(carpeta, 'dot.exe')):
+            os.environ['PATH'] = os.environ['PATH'] + os.pathsep + carpeta
+            return
+
+
+def _texto(simbolo):
+    return EPSILON if simbolo is None else simbolo
+
+
+def dibujar(afn, titulo=None):
+    #graphviz solo necesita los nodos y las aristas, el acomodo lo resuelve dot
+    grafo = Digraph('AFN', format='svg')
+    grafo.attr(rankdir='LR', bgcolor='white', fontname=FUENTE_GRAFO,
+               labelloc='t', fontsize='16', fontcolor=COLOR_TITULO)
+    if titulo:
+        grafo.attr(label=titulo)
+
+    grafo.attr('node', fontname=FUENTE_GRAFO, fontsize='14', shape='circle',
+               color=COLOR_ESTADO, fontcolor=COLOR_ESTADO, penwidth='1.4')
+    grafo.attr('edge', fontname=FUENTE_GRAFO, fontsize='13', color=COLOR_LINEA,
+               arrowsize='0.7')
+
+    grafo.node(FLECHA_INICIAL, shape='none', label='')
+    for estado in afn.estados:
+        if estado == afn.aceptacion:
+            grafo.node(str(estado), shape='doublecircle',
+                       color=COLOR_ACEPTACION, fontcolor=COLOR_ACEPTACION)
+        elif estado == afn.inicio:
+            grafo.node(str(estado), color=COLOR_INICIAL, fontcolor=COLOR_INICIAL)
+        else:
+            grafo.node(str(estado))
+
+    grafo.edge(FLECHA_INICIAL, str(afn.inicio), color=COLOR_INICIAL)
+
+    #las aristas paralelas se juntan en una sola con las etiquetas separadas por coma
+    etiquetas = {}
+    for (origen, simbolo), destinos in afn.transiciones.items():
+        for destino in destinos:
+            etiquetas.setdefault((origen, destino), set()).add(simbolo)
+
+    for (origen, destino), simbolos in sorted(etiquetas.items()):
+        vacia = simbolos == {None}
+        texto = ','.join(_texto(s) for s in
+                         sorted(simbolos, key=lambda s: (s is None, s or '')))
+        grafo.edge(str(origen), str(destino), label=f" {texto} ",
+                   fontcolor=COLOR_EPSILON if vacia else COLOR_SIMBOLO,
+                   color=COLOR_EPSILON if vacia else COLOR_LINEA,
+                   style='dashed' if vacia else 'solid')
+
+    return grafo
+
+
+def guardar(afn, ruta_base, titulo=None, abrir=False):
+    _asegurar_dot()
+    return dibujar(afn, titulo).render(ruta_base, cleanup=True, view=abrir)
