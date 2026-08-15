@@ -134,3 +134,42 @@ def afn_de(expresion, expandir=True):
     inicio, aceptacion = _fragmento(raiz, fabrica)
     return postfix, _renumerar(AFN(inicio, aceptacion,
                                    fabrica.transiciones, fabrica.alfabeto))
+
+
+#---Simulación del AFN
+
+def cerradura_epsilon(afn, estados):
+    #todos los estados alcanzables sin consumir nada
+    cerrada = set(estados)
+    pila = list(estados)
+    while pila:
+        for destino in afn.destinos(pila.pop(), None):
+            if destino not in cerrada:
+                cerrada.add(destino)
+                pila.append(destino)
+    return cerrada
+
+
+def mover(afn, estados, simbolo):
+    destinos = set()
+    for estado in estados:
+        destinos |= afn.destinos(estado, simbolo)
+    return destinos
+
+
+def simular(afn, w):
+    #devuelve (acepta, pasos); cada paso es (simbolo consumido, estados actuales)
+    actuales = cerradura_epsilon(afn, {afn.inicio})
+    pasos = [('', sorted(actuales))]
+
+    for simbolo in w:
+        actuales = cerradura_epsilon(afn, mover(afn, actuales, simbolo))
+        pasos.append((simbolo, sorted(actuales)))
+        if not actuales:
+            break
+
+    return afn.aceptacion in actuales, pasos
+
+
+def acepta(expresion, w, expandir=True):
+    return simular(afn_de(expresion, expandir)[1], w)[0]
