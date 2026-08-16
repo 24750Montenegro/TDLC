@@ -1,9 +1,11 @@
 
 import os
 import shutil
+import textwrap
 from collections import deque
 
 from graphviz import Digraph
+from graphviz import ExecutableNotFound
 
 from arbol import (EPSILON, arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
                    COLOR_OPERADOR, COLOR_LINEA)
@@ -252,3 +254,81 @@ def dibujar(afn, titulo=None):
 def guardar(afn, ruta_base, titulo=None, abrir=False):
     _asegurar_dot()
     return dibujar(afn, titulo).render(ruta_base, cleanup=True, view=abrir)
+
+
+#---entrada del programa
+
+def _resumen(afn):
+    estados = afn.estados
+    return (f"  Estados: {len(estados)} (0..{estados[-1]})   "
+            f"Inicial: {afn.inicio}   Aceptación: {afn.aceptacion}   "
+            f"Alfabeto: {{{', '.join(sorted(afn.alfabeto))}}}")
+
+
+def _transiciones_texto(afn):
+    partes = [f"{origen}-{_texto(simbolo)}->{destino}"
+              for origen in afn.estados
+              for simbolo, destino in afn.salidas(origen)]
+    return textwrap.fill(' '.join(partes), width=100,
+                         initial_indent="  Transiciones: ",
+                         subsequent_indent=" " * 16)
+
+
+def _traza_texto(pasos):
+    lineas = []
+    for simbolo, estados in pasos:
+        etiqueta = "inicio" if not simbolo else f"lee '{simbolo}'"
+        conjunto = '{' + ', '.join(str(estado) for estado in estados) + '}'
+        lineas.append(textwrap.fill(f"    {etiqueta:<9} -> {conjunto}", width=100,
+                                    subsequent_indent=" " * 17))
+    return '\n'.join(lineas)
+
+
+def procesar_archivo(filename, w, carpeta_salida="afn", abrir=False,
+                     expandir=True, detalle=True):
+    #una linea del archivo es una r: se construye su AFN, se dibuja y se simula con w
+    try:
+        with open(filename, 'r', encoding='utf-8') as archivo:
+            expresiones = [linea.strip() for linea in archivo]
+    except FileNotFoundError:
+        print(f"Error 404: El archivo '{filename}' no existe.")
+        return
+
+    os.makedirs(carpeta_salida, exist_ok=True)
+    generados = 0
+
+    for expresion in expresiones:
+        if not expresion:
+            continue
+
+        try:
+            postfix, automata = afn_de(expresion, expandir)
+        except ValueError as error:
+            print(f"Expresión inválida '{expresion}': {error}\n")
+            continue
+
+        generados += 1
+        aceptada, pasos = simular(automata, w)
+        veredicto = "sí" if aceptada else "no"
+
+        print(f"r = {expresion:<24} Postfix: {postfix}")
+        print(_resumen(automata))
+        if detalle:
+            print(_transiciones_texto(automata))
+            print(f"  Simulación con w = \"{w}\":")
+            print(_traza_texto(pasos))
+
+        titulo = f"r = {expresion}    w = \"{w}\"    w ∈ L(r): {veredicto}"
+        ruta = os.path.join(carpeta_salida, f"afn_{generados}")
+
+        try:
+            archivo_svg = guardar(automata, ruta, titulo=titulo, abrir=abrir)
+            print(f"  Imagen: {archivo_svg}")
+        except ExecutableNotFound:
+            print("  Imagen: no se generó, falta el binario de Graphviz "
+                  "(instálelo con: winget install Graphviz.Graphviz)")
+
+        print(f"  ¿w = \"{w}\" pertenece a L(r)?  ->  {veredicto.upper()}\n")
+
+    if generados:
+        print(f"{generados} AFN generados en: {os.path.abspath(carpeta_salida)}")
