@@ -1,3 +1,5 @@
+import sys
+
 operadoresUnarios = ['?', '*', '+']
 operadoresBinarios = ['|', '.', '^']
 operadores = operadoresUnarios + operadoresBinarios
@@ -226,17 +228,25 @@ def read_file(filename, pasos=False):
 
 
 if __name__ == "__main__":
+    #el menu imprime epsilon y acentos: sin esto falla si la consola no es UTF-8
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except (AttributeError, OSError):
+        pass
+
     while True:
-        print("\n=============Menú=============")
+        print()
+        print("=============Menú=============")
         print("1. Leer archivo")
         print("2. Leer archivo paso a paso")
         print("3. Leer archivo y graficar el AST")
-        print("4. Salir")
+        print("4. Leer archivo, generar el AFN y simular una cadena")
+        print("5. Salir")
         print("==============================")
         print()
         opcion = input("Seleccione una opción: ")
 
-        if opcion in ('1', '2', '3'):
+        if opcion in ('1', '2', '3', '4'):
             filename = input("Ingrese el nombre del archivo: ")
             if not filename.lower().endswith('.txt'):
                 filename += '.txt'
@@ -244,11 +254,17 @@ if __name__ == "__main__":
             if opcion == '3':
                 from arbol import graficar_archivo
                 graficar_archivo(filename)
+            elif opcion == '4':
+                from afn import procesar_archivo
+                w = input("Ingrese la cadena w a evaluar: ")
+                respuesta = input("¿Abrir las imágenes al terminar? (s/n): ")
+                procesar_archivo(filename, w,
+                                 abrir=respuesta.strip().lower().startswith('s'))
             else:
                 read_file(filename, pasos=(opcion == '2'))
 
-        elif opcion == '4':
+        elif opcion == '5':
             print("Saliendo del programa.")
             break
         else:
-            print("Opción inválida. Por favor, seleccione 1, 2, 3 o 4.")
+            print("Opción inválida. Por favor, seleccione 1, 2, 3, 4 o 5.")

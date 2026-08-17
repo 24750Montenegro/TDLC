@@ -318,7 +318,7 @@ def procesar_archivo(filename, w, carpeta_salida="afn", abrir=False,
             print(f"  Simulación con w = \"{w}\":")
             print(_traza_texto(pasos))
 
-        titulo = f"r = {expresion}    w = \"{w}\"    w ∈ L(r): {veredicto}"
+        titulo = f"r = {expresion}    w = \"{w}\"    w pertenece a L(r): {veredicto}"
         ruta = os.path.join(carpeta_salida, f"afn_{generados}")
 
         try:
