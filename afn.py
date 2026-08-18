@@ -4,8 +4,7 @@ import shutil
 import textwrap
 from collections import deque
 
-from graphviz import Digraph
-from graphviz import ExecutableNotFound
+from graphviz import Digraph, ExecutableNotFound
 
 from arbol import (EPSILON, arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
                    COLOR_OPERADOR, COLOR_LINEA)
