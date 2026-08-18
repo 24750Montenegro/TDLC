@@ -10,6 +10,10 @@ Dos programas independientes, cada uno con su propio menú y su propio archivo d
 - **`arbol.py`**  — construye el AST (árbol sintáctico) a partir del postfix y lo dibuja
   en SVG. No tiene menú propio: lo llama la opción 3 de `shuntingyard.py`.
 
+- **`afn.py`**  — aplica el algoritmo de Thompson al AST para construir el AFN, lo dibuja
+  con Graphviz y simula una cadena `w` sobre él. Tampoco tiene menú propio: lo llama la
+  opción 4 de `shuntingyard.py`.
+
 ## Video de ejecución
 Demostración de  programas corriendo:
 
@@ -20,15 +24,29 @@ Demostración de  programas corriendo:
 #### Lab 3 - Generación de AST's
 **https://youtu.be/ZuII4VVMHmY**
 
+#### Lab 4 - Construcción y simulación del AFN
+_(pendiente)_
+
 ## Requisitos
 
 - Python 3
-- `svgling`. Solo lo usa `arbol.py`, es decir la opción 3
-  del menú, la que dibuja el AST:
+- `svgling` — lo usa `arbol.py`, es decir la opción 3 del menú, la que dibuja el AST.
+- `graphviz` — lo usa `afn.py`, es decir la opción 4, la que dibuja el AFN.
 
 ```
 pip install -r requirements.txt
 ```
+
+El paquete `graphviz` de Python solo arma el grafo; quien lo dibuja es el programa `dot`,
+que se instala aparte:
+
+```
+winget install Graphviz.Graphviz
+```
+
+Si el instalador no deja `dot` en el `PATH`, `afn.py` lo busca solo en
+`C:\Program Files\Graphviz\bin`. Si aun asi no lo encuentra, lo avisa y continúa: la
+simulación se imprime igual, lo único que falta es la imagen.
 
 ## Cómo ejecutar el Shunting Yard
 
@@ -45,7 +63,8 @@ Menú:
 1. Leer archivo
 2. Leer archivo paso a paso
 3. Leer archivo y graficar el AST
-4. Salir
+4. Leer archivo, generar el AFN y simular una cadena
+5. Salir
 Seleccione una opción:
 ```
 
@@ -56,9 +75,14 @@ Seleccione una opción:
 - **Opción 3** — lo mismo que la opción 1 y además guarda un `.svg` por expresión en la
   carpeta `ast/` (`ast_1.svg`, `ast_2.svg`, …) con su árbol sintáctico. Los `a+` y `a?`
   se dibujan ya expandidos como `a.a*` y `a|ε`. De esto se encarga `arbol.py`.
-- **Opción 4** — salir.
+- **Opción 4** — construye el AFN de cada expresión con el algoritmo de Thompson, guarda
+  un `.svg` por AFN en la carpeta `afn/` y simula sobre cada uno la cadena `w` que se pida,
+  respondiendo **sí** o **no** según `w` pertenezca o no a `L(r)`. De esto se encarga
+  `afn.py`. Además del archivo pide la cadena `w` y si quiere abrir las imágenes al
+  terminar.
+- **Opción 5** — salir.
 
-Después de elegir 1, 2 o 3 pide el nombre del archivo. Escriba:
+Después de elegir 1, 2, 3 o 4 pide el nombre del archivo. Escriba:
 
 ```
 expresiones.txt
@@ -182,6 +206,91 @@ graficar_archivo("expresiones.txt")  # exactamente lo que hace la opción 3
 para dejar los `+` y `?` sin expandir, y `carpeta_salida` para cambiar el destino
 de los `.svg`.
 
+## Cómo se construye el AFN (`afn.py`)
+
+La opción 4 pasa por `afn.py`, que resuelve el Lab 4 reutilizando lo del Lab 3: no vuelve a
+parsear nada, recibe el AST que armó `arbol.py` y le aplica el **algoritmo de Thompson**.
+
+El repositorio incluye `afn.txt` con las cuatro expresiones del enunciado:
+
+```
+(a*|b*)+
+((ε|a)|b*)*
+(a|b)*abb(a|b)*
+0?(1?)?0*
+```
+
+### Thompson
+
+Cada nodo del AST produce un fragmento con exactamente un estado inicial y uno de
+aceptación, y los fragmentos se van encadenando al subir por el árbol:
+
+| Nodo | Construcción |
+|---|---|
+| símbolo `a` | `i --a--> f` |
+| `ε` | `i --ε--> f` |
+| `r·s` | se une la aceptación de `r` con el inicio de `s` por `ε` |
+| `r\|s` | un `i` nuevo entra por `ε` a los dos, y los dos salen por `ε` a un `f` nuevo |
+| `r*` | `i --ε--> r --ε--> f`, más el regreso `ε` de la salida de `r` a su entrada y el atajo `i --ε--> f` |
+| `r+` | igual que `r*` pero sin el atajo `i --ε--> f` |
+| `r?` | igual que `r*` pero sin el regreso |
+
+Como `arbol.py` ya expande `a+` como `a·a*` y `a?` como `a|ε`, en la práctica al AFN solo
+le llegan `·`, `|` y `*`; las construcciones de `+` y `?` están de todos modos, por si se
+usa `expandir=False`. El operador `^` no tiene semántica de autómata, así que se reporta
+como expresión inválida y se sigue con la siguiente línea.
+
+Los estados se numeran al final con un BFS desde el inicial, y la aceptación se manda al
+último número: así todo AFN queda numerado de `0` (inicial) a `n-1` (aceptación).
+
+### La simulación
+
+Es la simulación clásica por conjuntos de estados, sin convertir a AFD:
+
+1. se parte de la cerradura `ε` del estado inicial;
+2. por cada símbolo de `w` se toman las transiciones con ese símbolo y se vuelve a cerrar
+   con `ε`;
+3. `w ∈ L(r)` si al terminar el estado de aceptación quedó dentro del conjunto.
+
+Si el conjunto queda vacío a media cadena se corta y la respuesta es **no**. La traza
+imprime el conjunto de estados después de cada símbolo leído.
+
+### El dibujo
+
+`graphviz` recibe solo los nodos y las aristas; el acomodo lo resuelve `dot`:
+
+- el estado inicial va en azul y con una flecha de entrada que no sale de ningún estado;
+- el de aceptación va en doble círculo verde;
+- las transiciones `ε` van punteadas en verde y las que consumen un símbolo en línea
+  continua azul;
+- las aristas paralelas entre el mismo par de estados se juntan en una sola con las
+  etiquetas separadas por coma;
+- el título del grafo lleva la expresión `r`, la cadena `w` y el veredicto.
+
+Se guarda un `.svg` por expresión en `afn/`, numerados en el orden del archivo
+(`afn_1.svg`, `afn_2.svg`, …), igual que los del AST.
+
+### Usarlo desde Python
+
+```python
+from afn import afn_de, simular, acepta, guardar, procesar_archivo
+
+postfix, automata = afn_de("(a|b)*abb(a|b)*")
+automata                      # AFN(estados=22, inicio=0, aceptacion=21)
+automata.alfabeto             # {'a', 'b'}
+automata.salidas(0)           # [(None, 1), (None, 2)]  -> None es ε
+
+acepta("(a|b)*abb(a|b)*", "babba")     # True
+simular(automata, "abb")               # (True, [('', [...]), ('a', [...]), ...])
+
+guardar(automata, "afn/mi_afn", titulo="(a|b)*abb(a|b)*")
+procesar_archivo("afn.txt", "abb")     # exactamente lo que hace la opción 4
+```
+
+`procesar_archivo(filename, w, carpeta_salida="afn", abrir=False, expandir=True,
+detalle=True)` acepta `abrir=True` para abrir cada `.svg` al generarlo y `detalle=False`
+para imprimir solo el resumen y el veredicto, sin las transiciones ni la traza.
+
 ## Cómo ejecutar el verificador de balanceo
 
 `Balanceo.py` resuelve el ejercicio 2. El repositorio incluye `ejercicio2.txt` con las
@@ -248,7 +357,10 @@ error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este progra
 - `expresiones.txt` — expresiones de ejemplo para el ejercicio 3 Lab 2.
 - `arbol.py` — construcción y dibujo del AST a partir del postfix Lab 3.
 - `ast/` — carpeta donde la opción 3 guarda los `.svg`.
+- `afn.py` — Lab 4: AFN por Thompson a partir del AST, su dibujo y su simulación.
+- `afn.txt` — las cuatro expresiones del Lab 4.
+- `afn/` — carpeta donde la opción 4 guarda los `.svg`.
 - `Balanceo.py` — ejercicio 2 Lab 2: verificador de balanceo con traza de la pila.
 - `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
-- `requirements.txt` — dependencias (`svgling`).
+- `requirements.txt` — dependencias (`svgling`, `graphviz`).
 - `doc/` — PDFs de los ejercicios escritos.
