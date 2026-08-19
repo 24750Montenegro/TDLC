@@ -44,9 +44,14 @@ que se instala aparte:
 winget install Graphviz.Graphviz
 ```
 
+En Linux es `sudo apt install graphviz` y en Mac `brew install graphviz`.
+
 Si el instalador no deja `dot` en el `PATH`, `afn.py` lo busca solo en
 `C:\Program Files\Graphviz\bin`. Si aun asi no lo encuentra, lo avisa y continúa: la
 simulación se imprime igual, lo único que falta es la imagen.
+
+**Si prefiere no instalar nada**, el repositorio trae un `Dockerfile` con todo adentro:
+vea [Correr con Docker](#correr-con-docker).
 
 ## Cómo ejecutar el Shunting Yard
 
@@ -98,6 +103,39 @@ Expresión: (a|b)*               - Formateada(infix): (a|b)*               - Pos
 Expresión: (a*|b*)*             - Formateada(infix): (a*|b*)*             - Postfix: a*b*|*
 ...
 ```
+
+## Correr con Docker
+
+`dot` es un programa en C, así que no se puede instalar con `pip`. Para no tener que
+instalarlo en cada máquina, la imagen de Docker ya lo trae, junto con Python y las dos
+dependencias:
+
+```
+docker compose run --rm afn
+```
+
+Eso abre el mismo menú de siempre. La primera vez construye la imagen (un par de minutos);
+después arranca de inmediato.
+
+### Probar sus propias expresiones
+
+El `compose.yaml` monta la carpeta del proyecto dentro del contenedor, así que **no hay que
+reconstruir la imagen para probar cosas nuevas**:
+
+- edite `afn.txt` o cree su propio `.txt` en su máquina, con el editor que quiera;
+- corra `docker compose run --rm afn`, elija la opción 4 y escriba el nombre del archivo;
+- los `.svg` aparecen en las carpetas `afn/` y `ast/` de su máquina, no dentro del
+  contenedor.
+
+Lo mismo aplica al código: si modifica un `.py`, el cambio se toma en la siguiente corrida.
+Solo hay que reconstruir (`docker compose build`) si cambia `requirements.txt`.
+
+### Diferencias con la ejecución nativa
+
+- La respuesta a *"¿Abrir las imágenes al terminar?"* debe ser **n**: el contenedor no
+  tiene escritorio, así que los `.svg` se abren desde su máquina.
+- El grafo usa DejaVu Sans Mono en vez de Consolas, que no existe en Linux. La fuente se
+  cambia con la variable `AFN_FUENTE`.
 
 ## Agregar sus propias expresiones
 
@@ -363,4 +401,6 @@ error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este progra
 - `Balanceo.py` — ejercicio 2 Lab 2: verificador de balanceo con traza de la pila.
 - `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
 - `requirements.txt` — dependencias (`svgling`, `graphviz`).
+- `Dockerfile` y `compose.yaml` — imagen con `dot` ya instalado, para correr el proyecto
+  sin instalar Graphviz en la máquina.
 - `doc/` — PDFs de los ejercicios escritos.
