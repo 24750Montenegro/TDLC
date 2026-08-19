@@ -1,0 +1,9 @@
+services:
+  afn:
+    build: .
+    # monta la carpeta del proyecto: el evaluador edita los .txt en su maquina y
+    # los .svg que genera el contenedor le aparecen ahi mismo, en ast/ y afn/
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
