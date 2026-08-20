@@ -25,7 +25,7 @@ Demostración de  programas corriendo:
 **https://youtu.be/ZuII4VVMHmY**
 
 #### Lab 4 - Construcción y simulación del AFN
-_(pendiente)_
+**https://youtu.be/OUuJWsCNV_8**
 
 ## Requisitos
 
