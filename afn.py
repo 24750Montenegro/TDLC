@@ -6,8 +6,9 @@ from collections import deque
 
 from graphviz import Digraph, ExecutableNotFound
 
-from arbol import (EPSILON, arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
+from arbol import (arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
                    COLOR_OPERADOR, COLOR_LINEA)
+from src.tokens import EPSILON
 
 #Consolas no existe fuera de Windows; en el contenedor se cambia con AFN_FUENTE
 FUENTE_GRAFO = os.environ.get("AFN_FUENTE", "Consolas")

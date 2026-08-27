@@ -4,10 +4,10 @@ import os
 import svgling
 from svgling.core import EdgeStyle
 
-from shuntingyard import (operadoresUnarios, operadoresBinarios, desproteger,
-                          format, procesar_protegido)
+from src.parseo import desproteger, format
+from src.shuntingyard import procesar_protegido
+from src.tokens import EPSILON, operadoresBinarios, operadoresUnarios
 
-EPSILON = 'ε'
 CONCATENACION = '·'
 
 FUENTE = "font-family: Consolas, monospace;"
