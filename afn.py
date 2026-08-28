@@ -6,8 +6,7 @@ from collections import deque
 
 from graphviz import Digraph, ExecutableNotFound
 
-from arbol import (arbol_de, COLOR_EPSILON, COLOR_OPERANDO,
-                   COLOR_OPERADOR, COLOR_LINEA)
+from src.arbol import arbol_de
 from src.tokens import EPSILON
 
 #Consolas no existe fuera de Windows; en el contenedor se cambia con AFN_FUENTE
@@ -15,10 +14,12 @@ FUENTE_GRAFO = os.environ.get("AFN_FUENTE", "Consolas")
 FLECHA_INICIAL = "__inicio__"
 
 COLOR_ESTADO = "#334155"
+COLOR_LINEA = "#0d59c4"
 COLOR_INICIAL = COLOR_LINEA
+COLOR_EPSILON = "#15803d"
 COLOR_ACEPTACION = COLOR_EPSILON
-COLOR_SIMBOLO = COLOR_OPERANDO
-COLOR_TITULO = COLOR_OPERADOR
+COLOR_SIMBOLO = "#8f9e05"
+COLOR_TITULO = "#d81d1d"
 
 
 class AFN:

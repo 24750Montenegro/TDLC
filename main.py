@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 filename += '.txt'
 
             if opcion == '3':
-                from arbol import graficar_archivo
+                from src.aplicacion import graficar_archivo
                 graficar_archivo(filename)
             elif opcion == '4':
                 from afn import procesar_archivo
