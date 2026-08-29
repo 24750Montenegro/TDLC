@@ -1,10 +1,15 @@
 
 import os
 
+from graphviz import ExecutableNotFound
+
+from .afn import afn_de, simular
 from .arbol import arbol_de
 from .archivos import leer_expresiones, preparar_carpeta
 from .dibujo_arbol import dibujar
+from .dibujo_automata import guardar
 from .parseo import format
+from .reportes import resumen, transiciones_texto, traza_texto
 
 
 def _expresiones(filename):
@@ -44,3 +49,49 @@ def graficar_archivo(filename, expandir=True, carpeta_salida="ast"):
         print(f"  {n}. {expresion}  ->  {ruta}")
 
     print(f"\n{len(arboles)} árboles guardados en: {destino}")
+
+
+def _guardar_imagen(automata, ruta, titulo, abrir):
+    try:
+        print(f"  Imagen: {guardar(automata, ruta, titulo=titulo, abrir=abrir)}")
+    except ExecutableNotFound:
+        print("  Imagen: no se generó, falta el binario de Graphviz "
+              "(instálelo con: winget install Graphviz.Graphviz)")
+
+
+def procesar_archivo(filename, w, carpeta_salida="afn", abrir=False,
+                     expandir=True, detalle=True):
+    #una linea del archivo es una r: se construye su AFN, se dibuja y se simula con w
+    expresiones = _expresiones(filename)
+    if expresiones is None:
+        return
+
+    preparar_carpeta(carpeta_salida)
+    generados = 0
+
+    for expresion in expresiones:
+        try:
+            postfix, automata = afn_de(expresion, expandir)
+        except ValueError as error:
+            print(f"Expresión inválida '{expresion}': {error}\n")
+            continue
+
+        generados += 1
+        aceptada, pasos = simular(automata, w)
+        veredicto = "sí" if aceptada else "no"
+
+        print(f"r = {expresion:<24} Postfix: {postfix}")
+        print(resumen(automata))
+        if detalle:
+            print(transiciones_texto(automata))
+            print(f"  Simulación con w = \"{w}\":")
+            print(traza_texto(pasos))
+
+        titulo = f"r = {expresion}    w = \"{w}\"    w pertenece a L(r): {veredicto}"
+        _guardar_imagen(automata, os.path.join(carpeta_salida, f"afn_{generados}"),
+                        titulo, abrir)
+
+        print(f"  ¿w = \"{w}\" pertenece a L(r)?  ->  {veredicto.upper()}\n")
+
+    if generados:
+        print(f"{generados} AFN generados en: {os.path.abspath(carpeta_salida)}")

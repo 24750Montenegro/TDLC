@@ -63,7 +63,7 @@ if __name__ == "__main__":
                 from src.aplicacion import graficar_archivo
                 graficar_archivo(filename)
             elif opcion == '4':
-                from afn import procesar_archivo
+                from src.aplicacion import procesar_archivo
                 w = input("Ingrese la cadena w a evaluar: ")
                 respuesta = input("¿Abrir las imágenes al terminar? (s/n): ")
                 procesar_archivo(filename, w,
