@@ -9,7 +9,8 @@ from .archivos import leer_expresiones, preparar_carpeta
 from .dibujo_arbol import dibujar
 from .dibujo_automata import guardar
 from .parseo import format
-from .reportes import resumen, transiciones_texto, traza_texto
+from .reportes import (resumen, tabla_balanceo, transiciones_texto,
+                       traza_texto)
 
 
 def _expresiones(filename):
@@ -95,3 +96,13 @@ def procesar_archivo(filename, w, carpeta_salida="afn", abrir=False,
 
     if generados:
         print(f"{generados} AFN generados en: {os.path.abspath(carpeta_salida)}")
+
+
+def verificar_archivo(filename):
+    #el ejercicio 2: por cada linea, la traza de la pila y el veredicto
+    expresiones = _expresiones(filename)
+    if expresiones is None:
+        return
+
+    for expresion in expresiones:
+        print(tabla_balanceo(expresion)[1])

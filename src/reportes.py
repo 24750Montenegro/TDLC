@@ -2,6 +2,7 @@
 import textwrap
 
 from .automata import texto
+from .balanceo import verificar_balanceo
 
 ANCHO = 100
 
@@ -35,3 +36,18 @@ def traza_texto(pasos):
         lineas.append(textwrap.fill(f"    {etiqueta:<9} -> {conjunto(estados)}",
                                     width=ANCHO, subsequent_indent=" " * 17))
     return '\n'.join(lineas)
+
+
+def tabla_balanceo(expresion):
+    #la traza de la pila del ejercicio 2: devuelve (balanceada, texto)
+    esta_balanceada, motivo, pasos = verificar_balanceo(expresion)
+    lineas = [f"Expresion: {expresion}",
+              f"  {'#':>3}  {'Pos':>3}  {'Token':<6} {'Accion':<45} {'Pila'}"]
+
+    for n, (pos, token, accion, pila) in enumerate(pasos, 1):
+        lineas.append(f"  {n:>3}  {pos:>3}   {token:<6} {accion:<45} {pila}")
+
+    lineas.append(">> Resultado: BIEN BALANCEADA\n" if esta_balanceada
+                  else f">> Resultado: NO BALANCEADA -> {motivo}\n")
+
+    return esta_balanceada, '\n'.join(lineas)
