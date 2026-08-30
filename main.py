@@ -1,5 +1,6 @@
 import sys
 
+from src.archivos import resolver
 from src.parseo import format
 from src.shuntingyard import infix_to_postfix, procesar
 
@@ -55,9 +56,7 @@ if __name__ == "__main__":
         opcion = input("Seleccione una opción: ")
 
         if opcion in ('1', '2', '3', '4'):
-            filename = input("Ingrese el nombre del archivo: ")
-            if not filename.lower().endswith('.txt'):
-                filename += '.txt'
+            filename = resolver(input("Ingrese el nombre del archivo: "))
 
             if opcion == '3':
                 from src.aplicacion import graficar_archivo

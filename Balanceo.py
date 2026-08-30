@@ -14,7 +14,7 @@ tambien se pueden reutilizar desde otro programa.
 import sys
 
 from src.aplicacion import verificar_archivo
-from src.archivos import normalizar
+from src.archivos import resolver
 
 
 def mostrar_menu():
@@ -35,7 +35,7 @@ def ejecutar(opcion):
         print("Opcion invalida. Por favor, seleccione 1 o 2.")
         return True
 
-    verificar_archivo(normalizar(input("Ingrear el nombre del archivo: ")))
+    verificar_archivo(resolver(input("Ingrear el nombre del archivo: ")))
     return True
 
 
