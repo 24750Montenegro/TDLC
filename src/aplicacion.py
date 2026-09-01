@@ -8,9 +8,8 @@ from .arbol import arbol_de
 from .archivos import leer_expresiones, preparar_carpeta
 from .dibujo_arbol import dibujar
 from .dibujo_automata import guardar
-from .parseo import format
-from .reportes import (resumen, tabla_balanceo, transiciones_texto,
-                       traza_texto)
+from .reportes import (linea_expresion, resumen, tabla_balanceo, tabla_pasos,
+                       transiciones_texto, traza_texto)
 
 
 def _expresiones(filename):
@@ -20,6 +19,19 @@ def _expresiones(filename):
     except FileNotFoundError:
         print(f"Error 404: El archivo '{filename}' no existe.")
         return None
+
+
+def read_file(filename, pasos=False):
+    #imprime cada expresion del archivo: postfix, o la traza completa del algoritmo
+    expresiones = _expresiones(filename)
+    if expresiones is None:
+        return
+
+    for expresion in expresiones:
+        try:
+            print(tabla_pasos(expresion) if pasos else linea_expresion(expresion))
+        except ValueError as error:
+            print(f"Expresión inválida '{expresion}': {error}")
 
 
 def graficar_archivo(filename, expandir=True, carpeta_salida="ast"):
@@ -34,8 +46,7 @@ def graficar_archivo(filename, expandir=True, carpeta_salida="ast"):
         try:
             postfix, raiz = arbol_de(expresion, expandir)
             arboles.append((expresion, raiz))
-            print(f"Expresión: {expresion:<20} - Formateada(infix): "
-                  f"{format(expresion):<20} - Postfix: {postfix}")
+            print(linea_expresion(expresion, postfix))
         except ValueError as error:
             print(f"Expresión inválida '{expresion}': {error}")
 

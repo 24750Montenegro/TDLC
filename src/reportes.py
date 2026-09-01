@@ -3,6 +3,8 @@ import textwrap
 
 from .automata import texto
 from .balanceo import verificar_balanceo
+from .parseo import format
+from .shuntingyard import infix_to_postfix, procesar
 
 ANCHO = 100
 
@@ -51,3 +53,22 @@ def tabla_balanceo(expresion):
                   else f">> Resultado: NO BALANCEADA -> {motivo}\n")
 
     return esta_balanceada, '\n'.join(lineas)
+
+
+def linea_expresion(expresion, postfix=None):
+    #la linea de una sola expresion: original, infix formateado y postfix
+    postfix = postfix if postfix is not None else infix_to_postfix(expresion)
+    return (f"Expresión: {expresion:<20} - Formateada(infix): "
+            f"{format(expresion):<20} - Postfix: {postfix}")
+
+
+def tabla_pasos(expresion):
+    #la traza del shunting yard: token leido, pila y salida parcial
+    postfix, pasos = procesar(expresion)
+    lineas = [f"Expresión:        {expresion}",
+              f"Infix formateado: {format(expresion)}",
+              f"  {'#':>3}  {'Token':<6} {'Pila':<12} Salida"]
+    for n, (token, stack, salida) in enumerate(pasos, 1):
+        lineas.append(f"  {n:>3}  {token:<6} {stack:<12} {salida}")
+    lineas.append(f"Postfix: {postfix}\n")
+    return '\n'.join(lineas)
