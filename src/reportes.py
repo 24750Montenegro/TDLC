@@ -72,3 +72,41 @@ def tabla_pasos(expresion):
         lineas.append(f"  {n:>3}  {token:<6} {stack:<12} {salida}")
     lineas.append(f"Postfix: {postfix}\n")
     return '\n'.join(lineas)
+
+
+def tabla_transiciones(afd):
+    #la tabla del AFD: una fila por estado y una columna por simbolo
+    simbolos = afd.simbolos
+    ancho = max(6, max((len(str(estado)) for estado in afd.estados), default=1) + 2)
+    filas = ["     " + "Estado".ljust(ancho)
+             + ''.join(simbolo.center(ancho) for simbolo in simbolos)]
+
+    for estado in afd.estados:
+        marca = ('->' if estado == afd.inicio else '  ')
+        marca += ('*' if afd.es_aceptacion(estado) else ' ')
+        celdas = ''
+        for simbolo in simbolos:
+            destino = afd.destino(estado, simbolo)
+            celdas += ('-' if destino is None else str(destino)).center(ancho)
+        filas.append(f"  {marca}" + str(estado).ljust(ancho) + celdas)
+
+    return '\n'.join(filas)
+
+
+def subconjuntos_texto(afd, titulo="  Subconjuntos:"):
+    #de que estados del automata anterior salio cada estado del AFD
+    lineas = [titulo]
+    for estado, origenes in sorted(afd.subconjuntos.items()):
+        lineas.append(textwrap.fill(f"    {estado} = {conjunto(sorted(origenes))}",
+                                    width=ANCHO, subsequent_indent=" " * 8))
+    return '\n'.join(lineas)
+
+
+def traza_determinista(pasos):
+    #cada paso es (simbolo consumido, estado actual); None es cadena rechazada
+    lineas = []
+    for simbolo, estado in pasos:
+        etiqueta = "inicio" if not simbolo else f"lee '{simbolo}'"
+        destino = "— (no hay transición)" if estado is None else str(estado)
+        lineas.append(f"    {etiqueta:<9} -> {destino}")
+    return '\n'.join(lineas)
