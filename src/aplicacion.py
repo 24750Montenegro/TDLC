@@ -3,13 +3,27 @@ import os
 
 from graphviz import ExecutableNotFound
 
-from .afn import afn_de, simular
+from .afd import afd_de, minimizar
+from .afd import simular as simular_afd
+from .afn import afn_de
+from .afn import simular as simular_afn
 from .arbol import arbol_de
 from .archivos import leer_expresiones, preparar_carpeta
 from .dibujo_arbol import dibujar
 from .dibujo_automata import guardar
-from .reportes import (linea_expresion, resumen, tabla_balanceo, tabla_pasos,
-                       transiciones_texto, traza_texto)
+from .reportes import (linea_expresion, resumen, subconjuntos_texto,
+                       tabla_balanceo, tabla_pasos, tabla_transiciones,
+                       traza_determinista, traza_texto, transiciones_texto)
+
+#cada tipo de automata trae su nombre, su carpeta y el prefijo de sus imagenes
+AUTOMATAS = {
+    'afn': ("AFN (Thompson)", "afn", "afn"),
+    'afd': ("AFD (subconjuntos)", "afd", "afd"),
+    'min': ("AFD mínimo", "afd_min", "afd_min"),
+}
+
+ORIGEN = {'afd': "  Subconjuntos de estados del AFN:",
+          'min': "  Bloques de estados del AFD:"}
 
 
 def _expresiones(filename):
@@ -63,6 +77,23 @@ def graficar_archivo(filename, expandir=True, carpeta_salida="ast"):
     print(f"\n{len(arboles)} árboles guardados en: {destino}")
 
 
+def construir_automatas(expresion, tipos=('afn',), expandir=True):
+    #devuelve (postfix, {tipo: automata}); el AFD sale del AFN y el minimo del AFD
+    postfix, automata = afn_de(expresion, expandir)
+    construidos = {'afn': automata}
+
+    if 'afd' in tipos or 'min' in tipos:
+        construidos['afd'] = afd_de(automata)
+    if 'min' in tipos:
+        construidos['min'] = minimizar(construidos['afd'])
+
+    return postfix, {tipo: construidos[tipo] for tipo in tipos}
+
+
+def simular(tipo, automata, w):
+    return (simular_afn if tipo == 'afn' else simular_afd)(automata, w)
+
+
 def _guardar_imagen(automata, ruta, titulo, abrir):
     try:
         print(f"  Imagen: {guardar(automata, ruta, titulo=titulo, abrir=abrir)}")
@@ -71,42 +102,62 @@ def _guardar_imagen(automata, ruta, titulo, abrir):
               "(instálelo con: winget install Graphviz.Graphviz)")
 
 
-def procesar_archivo(filename, w, carpeta_salida="afn", abrir=False,
-                     expandir=True, detalle=True):
-    #una linea del archivo es una r: se construye su AFN, se dibuja y se simula con w
+def _detallar(tipo, automata, w, pasos):
+    if tipo == 'afn':
+        print(transiciones_texto(automata))
+    else:
+        print(tabla_transiciones(automata))
+        print(subconjuntos_texto(automata, ORIGEN[tipo]))
+
+    print(f"  Simulación con w = \"{w}\":")
+    print(traza_texto(pasos) if tipo == 'afn' else traza_determinista(pasos))
+
+
+def procesar_archivo(filename, w, tipos=('afn',), carpeta_salida=None,
+                     abrir=False, expandir=True, detalle=True):
+    #una linea del archivo es una r: se construyen sus automatas, se dibujan y
+    #se simula w sobre cada uno
     expresiones = _expresiones(filename)
     if expresiones is None:
         return
 
-    preparar_carpeta(carpeta_salida)
+    carpetas = {tipo: carpeta_salida or AUTOMATAS[tipo][1] for tipo in tipos}
+    for carpeta in set(carpetas.values()):
+        preparar_carpeta(carpeta)
+
     generados = 0
 
     for expresion in expresiones:
         try:
-            postfix, automata = afn_de(expresion, expandir)
+            postfix, automatas = construir_automatas(expresion, tipos, expandir)
         except ValueError as error:
             print(f"Expresión inválida '{expresion}': {error}\n")
             continue
 
         generados += 1
-        aceptada, pasos = simular(automata, w)
-        veredicto = "sí" if aceptada else "no"
-
         print(f"r = {expresion:<24} Postfix: {postfix}")
-        print(resumen(automata))
-        if detalle:
-            print(transiciones_texto(automata))
-            print(f"  Simulación con w = \"{w}\":")
-            print(traza_texto(pasos))
+        veredicto = "no"
 
-        titulo = f"r = {expresion}    w = \"{w}\"    w pertenece a L(r): {veredicto}"
-        _guardar_imagen(automata, os.path.join(carpeta_salida, f"afn_{generados}"),
-                        titulo, abrir)
+        for tipo, automata in automatas.items():
+            nombre, _, prefijo = AUTOMATAS[tipo]
+            aceptada, pasos = simular(tipo, automata, w)
+            veredicto = "sí" if aceptada else "no"
+
+            print(f"  {nombre}")
+            print(resumen(automata))
+            if detalle:
+                _detallar(tipo, automata, w, pasos)
+
+            titulo = (f"{nombre}    r = {expresion}    w = \"{w}\"    "
+                      f"w pertenece a L(r): {veredicto}")
+            ruta = os.path.join(carpetas[tipo], f"{prefijo}_{generados}")
+            _guardar_imagen(automata, ruta, titulo, abrir)
 
         print(f"  ¿w = \"{w}\" pertenece a L(r)?  ->  {veredicto.upper()}\n")
 
     if generados:
-        print(f"{generados} AFN generados en: {os.path.abspath(carpeta_salida)}")
+        for carpeta in sorted(set(carpetas.values())):
+            print(f"{generados} autómatas generados en: {os.path.abspath(carpeta)}")
 
 
 def verificar_archivo(filename):
