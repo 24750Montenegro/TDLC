@@ -1,18 +1,32 @@
 # Shunting Yard — Infix a Postfix
 
-Dos programas independientes, cada uno con su propio menú y su propio archivo de pruebas:
+Dos programas independientes, cada uno con su propio menú:
 
-- **`shuntingyard.py`**  — convierte expresiones regulares de notación infija
-  a postfija usando el algoritmo Shunting Yard de Dijkstra.
-- **`Balanceo.py`**  — verifica el balanceo de `()`, `[]` y `{}` con una pila,
-  mostrando la traza paso a paso.
+- **`main.py`**  — el menú del Shunting Yard: pide la opción, el archivo y la cadena `w`.
+- **`Balanceo.py`**  — el menú del verificador de balanceo de `()`, `[]` y `{}`.
 
-- **`arbol.py`**  — construye el AST (árbol sintáctico) a partir del postfix y lo dibuja
-  en SVG. No tiene menú propio: lo llama la opción 3 de `shuntingyard.py`.
+Ninguno de los dos tiene algoritmo adentro: los dos arman su menú sobre el paquete
+**`src/`**, donde vive todo. Cada módulo hace una sola cosa, así que se puede usar suelto
+desde Python sin pasar por el menú:
 
-- **`afn.py`**  — aplica el algoritmo de Thompson al AST para construir el AFN, lo dibuja
-  con Graphviz y simula una cadena `w` sobre él. Tampoco tiene menú propio: lo llama la
-  opción 4 de `shuntingyard.py`.
+| Módulo | Qué hace |
+|---|---|
+| `src/tokens.py` | la definición de los símbolos: operadores, precedencias, pares que se balancean, `ε` y el escape |
+| `src/parseo.py` | escapes, concatenación explícita, validación y formateo de la expresión |
+| `src/shuntingyard.py` | el algoritmo Shunting Yard de Dijkstra: infix → postfix y su traza |
+| `src/balanceo.py` | verificación de balanceo con una pila (el ejercicio 2), reutilizable |
+| `src/arbol.py` | el AST a partir del postfix |
+| `src/automata.py` | clase base `Automata`, común al AFN y al AFD |
+| `src/afn.py` | AFN por Thompson y su simulación por conjuntos de estados |
+| `src/afd.py` | AFD por subconjuntos, su simulación y su minimización |
+| `src/dibujo_arbol.py` | dibujo del AST con `svgling` |
+| `src/dibujo_automata.py` | dibujo del AFN y del AFD con `graphviz` |
+| `src/reportes.py` | los textos que se imprimen: tablas, transiciones y trazas |
+| `src/archivos.py` | lectura de los `.txt` y creación de las carpetas de salida |
+| `src/aplicacion.py` | une todo lo anterior: es lo que llama cada opción de los menús |
+
+Los `.txt` de ejemplo están en **`datos/`**, y las imágenes se generan en `ast/`, `afn/`,
+`afd/` y `afd_min/`.
 
 ## Video de ejecución
 Demostración de  programas corriendo:
@@ -30,8 +44,10 @@ Demostración de  programas corriendo:
 ## Requisitos
 
 - Python 3
-- `svgling` — lo usa `arbol.py`, es decir la opción 3 del menú, la que dibuja el AST.
-- `graphviz` — lo usa `afn.py`, es decir la opción 4, la que dibuja el AFN.
+- `svgling` — lo usa `src/dibujo_arbol.py`, es decir la opción 3 del menú, la que dibuja
+  el AST.
+- `graphviz` — lo usa `src/dibujo_automata.py`, es decir las opciones 4 a 7, las que
+  dibujan el AFN y el AFD.
 
 ```
 pip install -r requirements.txt
@@ -46,7 +62,7 @@ winget install Graphviz.Graphviz
 
 En Linux es `sudo apt install graphviz` y en Mac `brew install graphviz`.
 
-Si el instalador no deja `dot` en el `PATH`, `afn.py` lo busca solo en
+Si el instalador no deja `dot` en el `PATH`, `src/dibujo_automata.py` lo busca solo en
 `C:\Program Files\Graphviz\bin`. Si aun asi no lo encuentra, lo avisa y continúa: la
 simulación se imprime igual, lo único que falta es la imagen.
 
@@ -55,22 +71,25 @@ vea [Correr con Docker](#correr-con-docker).
 
 ## Cómo ejecutar el Shunting Yard
 
-El repositorio ya incluye `expresiones.txt` con expresiones de prueba
+El repositorio ya incluye `datos/expresiones.txt` con expresiones de prueba
 
 ```
-python shuntingyard.py
+python main.py
 ```
 
 Aparece un menú:
 
 ```
-Menú:
+=============Menú=============
 1. Leer archivo
 2. Leer archivo paso a paso
 3. Leer archivo y graficar el AST
 4. Leer archivo, generar el AFN y simular una cadena
-5. Salir
-Seleccione una opción:
+5. Leer archivo, convertir el AFN a AFD y simular una cadena
+6. Leer archivo, minimizar el AFD y simular una cadena
+7. Leer archivo y generar AFN, AFD y AFD mínimo
+8. Salir
+==============================
 ```
 
 - **Opción 1** — imprime, por cada línea del archivo: la expresión original, la
@@ -79,21 +98,27 @@ Seleccione una opción:
   (token leído, contenido de la pila y salida parcial en cada iteración).
 - **Opción 3** — lo mismo que la opción 1 y además guarda un `.svg` por expresión en la
   carpeta `ast/` (`ast_1.svg`, `ast_2.svg`, …) con su árbol sintáctico. Los `a+` y `a?`
-  se dibujan ya expandidos como `a.a*` y `a|ε`. De esto se encarga `arbol.py`.
+  se dibujan ya expandidos como `a.a*` y `a|ε`.
 - **Opción 4** — construye el AFN de cada expresión con el algoritmo de Thompson, guarda
   un `.svg` por AFN en la carpeta `afn/` y simula sobre cada uno la cadena `w` que se pida,
-  respondiendo **sí** o **no** según `w` pertenezca o no a `L(r)`. De esto se encarga
-  `afn.py`. Además del archivo pide la cadena `w` y si quiere abrir las imágenes al
-  terminar.
-- **Opción 5** — salir.
+  respondiendo **sí** o **no** según `w` pertenezca o no a `L(r)`.
+- **Opción 5** — convierte ese AFN a AFD por construcción de subconjuntos, guarda el
+  `.svg` en `afd/` y simula `w` sobre el AFD.
+- **Opción 6** — minimiza el AFD y guarda el `.svg` en `afd_min/`.
+- **Opción 7** — hace las tres cosas para cada expresión: AFN, AFD y AFD mínimo, cada uno
+  con su imagen y su simulación de `w`. Los tres deben dar el mismo veredicto.
+- **Opción 8** — salir.
 
-Después de elegir 1, 2, 3 o 4 pide el nombre del archivo. Escriba:
+Después de elegir una opción pide el nombre del archivo. Escriba:
 
 ```
-expresiones.txt
+expresiones
 ```
 
-La extensión `.txt` se puede agregar sola, así que basta con escribir `expresiones`.
+No hace falta la extensión ni la carpeta: el archivo se busca tal cual y, si no está, se
+busca dentro de `datos/`. `expresiones`, `expresiones.txt` y `datos/expresiones.txt` son
+la misma cosa. Las opciones 4 a 7 piden además la cadena `w` y si quiere abrir las
+imágenes al terminar.
 
 ### Salida esperada (opción 1)
 
@@ -122,10 +147,11 @@ después arranca de inmediato.
 El `compose.yaml` monta la carpeta del proyecto dentro del contenedor, así que **no hay que
 reconstruir la imagen para probar cosas nuevas**:
 
-- edite `afn.txt` o cree su propio `.txt` en su máquina, con el editor que quiera;
-- corra `docker compose run --rm afn`, elija la opción 4 y escriba el nombre del archivo;
-- los `.svg` aparecen en las carpetas `afn/` y `ast/` de su máquina, no dentro del
-  contenedor.
+- edite `datos/afn.txt` o cree su propio `.txt` en su máquina, con el editor que quiera;
+- corra `docker compose run --rm afn`, elija la opción que quiera y escriba el nombre del
+  archivo;
+- los `.svg` aparecen en las carpetas `ast/`, `afn/`, `afd/` y `afd_min/` de su máquina, no
+  dentro del contenedor.
 
 Lo mismo aplica al código: si modifica un `.py`, el cambio se toma en la siguiente corrida.
 Solo hay que reconstruir (`docker compose build`) si cambia `requirements.txt`.
@@ -139,15 +165,15 @@ Solo hay que reconstruir (`docker compose build`) si cambia `requirements.txt`.
 
 ## Agregar sus propias expresiones
 
-Puede agregar más líneas a `expresiones.txt` o crear otro archivo `.txt` (una expresión
-por línea; las líneas vacías se ignoran) y pasar su nombre en el menú.
+Puede agregar más líneas a `datos/expresiones.txt` o crear otro archivo `.txt` (una
+expresión por línea; las líneas vacías se ignoran) y pasar su nombre en el menú.
 
 ### Prefiera caracteres ASCII
 
 **Se recomienda escribir las expresiones solo con ASCII**, por portabilidad.
 
 El archivo se lee siempre como UTF-8, así que caracteres como el `ε` (épsilon) de la
-línea 4 de `expresiones.txt` se procesan sin problema. Lo que puede fallar es
+línea 4 de `datos/expresiones.txt` se procesan sin problema. Lo que puede fallar es
 *imprimirlos*: eso depende de la codificación de salida del entorno. Si la consola está
 en UTF-8 ( que es lo normal en Windows 11 y en la terminal de VS Code)
 todo se ve bien. Pero si la salida se redirige a un archivo o a un pipe, Python usa la
@@ -175,6 +201,9 @@ Precedencia (de menor a mayor): `(` `[` < `|` < `.` < `^` < `?` `*` `+`
 
 Dentro de una clase `[ ]` todo es literal salvo el `]` que la cierra y el `\` que escapa.
 
+Todo esto está en un solo lugar, `src/tokens.py`, y de ahí lo toman el parseo, el shunting
+yard y el verificador de balanceo.
+
 ## Validación
 
 Las expresiones inválidas no detienen el programa: se reporta el error y se continúa con
@@ -187,10 +216,11 @@ la siguiente línea. Se detectan, entre otros:
 - subexpresión vacía `()` o clase vacía `[]`
 - `\` al final de la expresión
 
-## Cómo se construye el AST (`arbol.py`)
+## Cómo se construye el AST (`src/arbol.py`)
 
-La opción 3 pasa por `arbol.py`. El módulo no reimplementa el algoritmo: toma el postfix
-que ya produjo `shuntingyard.py` y lo recorre con una pila, un caracter a la vez.
+La opción 3 pasa por `src/arbol.py`. El módulo no reimplementa el algoritmo: toma el
+postfix que ya produjo `src/shuntingyard.py` y lo recorre con una pila, un caracter a la
+vez.
 
 - un operando apila una hoja;
 - un operador unario (`*`, `+`, `?`) desapila un nodo y lo cuelga como su único hijo;
@@ -227,16 +257,16 @@ dibuja el nodo `+` o `?` tal cual, sin expandir.
 
 ### Usarlo desde Python
 
-Las tres funciones útiles si quiere llamarlo directamente:
-
 ```python
-from arbol import arbol_de, dibujar, graficar_archivo
+from src.arbol import arbol_de
+from src.dibujo_arbol import dibujar
+from src.aplicacion import graficar_archivo
 
 postfix, raiz = arbol_de("(a|b)+")   # postfix legible + raíz del AST
 raiz.postorden()                     # 'ab|ab|*.'  (ya expandido)
 dibujar(raiz).saveas("mi_arbol.svg")
 
-graficar_archivo("expresiones.txt")  # exactamente lo que hace la opción 3
+graficar_archivo("datos/expresiones.txt")   # exactamente lo que hace la opción 3
 ```
 
 `arbol_de(expresion, expandir=True)` y
@@ -244,12 +274,12 @@ graficar_archivo("expresiones.txt")  # exactamente lo que hace la opción 3
 para dejar los `+` y `?` sin expandir, y `carpeta_salida` para cambiar el destino
 de los `.svg`.
 
-## Cómo se construye el AFN (`afn.py`)
+## Cómo se construye el AFN (`src/afn.py`)
 
-La opción 4 pasa por `afn.py`, que resuelve el Lab 4 reutilizando lo del Lab 3: no vuelve a
-parsear nada, recibe el AST que armó `arbol.py` y le aplica el **algoritmo de Thompson**.
+La opción 4 pasa por `src/afn.py`, que no vuelve a parsear nada: recibe el AST que armó
+`src/arbol.py` y le aplica el **algoritmo de Thompson**.
 
-El repositorio incluye `afn.txt` con las cuatro expresiones del enunciado:
+El repositorio incluye `datos/afn.txt` con las cuatro expresiones del enunciado:
 
 ```
 (a*|b*)+
@@ -273,9 +303,9 @@ aceptación, y los fragmentos se van encadenando al subir por el árbol:
 | `r+` | igual que `r*` pero sin el atajo `i --ε--> f` |
 | `r?` | igual que `r*` pero sin el regreso |
 
-Como `arbol.py` ya expande `a+` como `a·a*` y `a?` como `a|ε`, en la práctica al AFN solo
-le llegan `·`, `|` y `*`; las construcciones de `+` y `?` están de todos modos, por si se
-usa `expandir=False`. El operador `^` no tiene semántica de autómata, así que se reporta
+Como `src/arbol.py` ya expande `a+` como `a·a*` y `a?` como `a|ε`, en la práctica al AFN
+solo le llegan `·`, `|` y `*`; las construcciones de `+` y `?` están de todos modos, por si
+se usa `expandir=False`. El operador `^` no tiene semántica de autómata, así que se reporta
 como expresión inválida y se sigue con la siguiente línea.
 
 Los estados se numeran al final con un BFS desde el inicial, y la aceptación se manda al
@@ -293,25 +323,91 @@ Es la simulación clásica por conjuntos de estados, sin convertir a AFD:
 Si el conjunto queda vacío a media cadena se corta y la respuesta es **no**. La traza
 imprime el conjunto de estados después de cada símbolo leído.
 
+## Cómo se construye el AFD (`src/afd.py`)
+
+Las opciones 5, 6 y 7 pasan por `src/afd.py`, que reutiliza el AFN del paso anterior: no
+hay una segunda construcción desde la expresión.
+
+### Construcción por subconjuntos
+
+Cada estado del AFD es un conjunto de estados del AFN:
+
+1. el estado inicial es la cerradura `ε` del inicial del AFN;
+2. desde un conjunto `S` y un símbolo `a`, el destino es la cerradura `ε` de todos los
+   estados a los que `S` llega leyendo `a`;
+3. los conjuntos nuevos entran a una cola y se repite hasta que no aparezcan más;
+4. acepta todo conjunto que contenga el estado de aceptación del AFN.
+
+Los destinos vacíos no se guardan: el AFD queda **parcial**, y una transición que no existe
+significa que la cadena ya no puede pertenecer al lenguaje. Como los conjuntos se generan
+con un BFS desde el inicial, solo aparecen los estados alcanzables y el inicial siempre
+queda numerado como `0`.
+
+Debajo de la tabla se imprime a qué conjunto de estados del AFN corresponde cada estado del
+AFD, que es lo que hace legible la construcción.
+
+### Minimización
+
+Se minimiza por **particiones (Moore)**, sobre el AFD ya construido:
+
+1. se quitan los estados inalcanzables;
+2. se completa el autómata: las transiciones que faltan van a un estado sumidero, para que
+   toda firma exista;
+3. se parte en dos bloques, aceptación y no aceptación;
+4. se refina: dos estados siguen en el mismo bloque mientras cada símbolo los mande al
+   mismo bloque. Cuando ningún bloque se puede partir, cada bloque es un estado;
+5. se eliminan los estados muertos (los que ya no pueden llegar a una aceptación, el
+   sumidero entre ellos) y se renumera con un BFS desde el inicial.
+
+Igual que con los subconjuntos, se imprime qué bloque de estados del AFD quedó en cada
+estado del AFD mínimo. Por ejemplo, el AFD de `(a|b)*abb(a|b)*` tiene 9 estados y su
+mínimo tiene 4:
+
+```
+     Estado  a     b
+  -> 0       1     0
+     1       1     2
+     2       1     3
+    *3       3     3
+  Bloques de estados del AFD:
+    0 = {0, 2}
+    1 = {1}
+    2 = {3}
+    3 = {4, 5, 6, 7, 8}
+```
+
+### La simulación del AFD
+
+Es directa, sin conjuntos: se arranca en el estado inicial y cada símbolo de `w` mueve a un
+único estado. Si el símbolo no tiene transición la cadena se rechaza ahí mismo y la traza lo
+marca como `— (no hay transición)`. `w ∈ L(r)` si el estado donde se termina es de
+aceptación.
+
 ### El dibujo
 
-`graphviz` recibe solo los nodos y las aristas; el acomodo lo resuelve `dot`:
+`graphviz` recibe solo los nodos y las aristas; el acomodo lo resuelve `dot`. El mismo
+módulo dibuja el AFN y el AFD, porque los dos son un `Automata`:
 
 - el estado inicial va en azul y con una flecha de entrada que no sale de ningún estado;
-- el de aceptación va en doble círculo verde;
-- las transiciones `ε` van punteadas en verde y las que consumen un símbolo en línea
-  continua azul;
+- los estados de aceptación van en doble círculo verde;
+- las transiciones `ε` (solo las hay en el AFN) van punteadas en verde y las que consumen
+  un símbolo en línea continua azul;
 - las aristas paralelas entre el mismo par de estados se juntan en una sola con las
   etiquetas separadas por coma;
-- el título del grafo lleva la expresión `r`, la cadena `w` y el veredicto.
+- el título del grafo lleva el tipo de autómata, la expresión `r`, la cadena `w` y el
+  veredicto.
 
-Se guarda un `.svg` por expresión en `afn/`, numerados en el orden del archivo
-(`afn_1.svg`, `afn_2.svg`, …), igual que los del AST.
+Se guarda un `.svg` por expresión en `afn/`, `afd/` y `afd_min/` según la opción,
+numerados en el orden del archivo (`afn_1.svg`, `afd_1.svg`, `afd_min_1.svg`, …).
 
 ### Usarlo desde Python
 
 ```python
-from afn import afn_de, simular, acepta, guardar, procesar_archivo
+from src.afn import afn_de, simular, acepta
+from src.afd import afd_de, afd_de_expresion, minimizar, minimo_de_expresion
+from src.afd import simular as simular_afd
+from src.dibujo_automata import guardar
+from src.aplicacion import procesar_archivo
 
 postfix, automata = afn_de("(a|b)*abb(a|b)*")
 automata                      # AFN(estados=22, inicio=0, aceptacion=21)
@@ -321,18 +417,30 @@ automata.salidas(0)           # [(None, 1), (None, 2)]  -> None es ε
 acepta("(a|b)*abb(a|b)*", "babba")     # True
 simular(automata, "abb")               # (True, [('', [...]), ('a', [...]), ...])
 
-guardar(automata, "afn/mi_afn", titulo="(a|b)*abb(a|b)*")
-procesar_archivo("afn.txt", "abb")     # exactamente lo que hace la opción 4
+afd = afd_de(automata)                 # AFD(estados=9, inicio=0, aceptacion=[4, 5, 6, 7, 8])
+afd.subconjuntos[0]                    # los estados del AFN que forman el estado 0
+afd.destino(0, 'a')                    # 1  (None si no hay transición)
+simular_afd(afd, "abb")                # (True, [('', 0), ('a', 1), ('b', 3), ('b', 4)])
+
+minimo = minimizar(afd)                # AFD(estados=4, inicio=0, aceptacion=[3])
+minimo_de_expresion("(a|b)*abb(a|b)*") # el postfix y el AFD mínimo, en un paso
+
+guardar(minimo, "afd_min/mi_afd", titulo="(a|b)*abb(a|b)*")
+procesar_archivo("datos/afn.txt", "abb")    # exactamente lo que hace la opción 4
 ```
 
-`procesar_archivo(filename, w, carpeta_salida="afn", abrir=False, expandir=True,
-detalle=True)` acepta `abrir=True` para abrir cada `.svg` al generarlo y `detalle=False`
-para imprimir solo el resumen y el veredicto, sin las transiciones ni la traza.
+`procesar_archivo(filename, w, tipos=('afn',), carpeta_salida=None, abrir=False,
+expandir=True, detalle=True)` es la única entrada que usan las opciones 4 a 7: `tipos`
+elige qué autómatas construir (`'afn'`, `'afd'`, `'min'`), `abrir=True` abre cada `.svg` al
+generarlo y `detalle=False` imprime solo el resumen y el veredicto, sin las transiciones ni
+la traza.
 
 ## Cómo ejecutar el verificador de balanceo
 
-`Balanceo.py` resuelve el ejercicio 2. El repositorio incluye `ejercicio2.txt` con las
-expresiones de prueba de ese inciso (varias están deliberadamente desbalanceadas).
+`Balanceo.py` resuelve el ejercicio 2 y es solo el menú: la verificación está en
+`src/balanceo.py` y la traza en `src/reportes.py`. El repositorio incluye
+`datos/ejercicio2.txt` con las expresiones de prueba de ese inciso (varias están
+deliberadamente desbalanceadas).
 
 ```
 python Balanceo.py
@@ -346,9 +454,9 @@ Aparece un menú:
 2. Salir
 ```
 
-Después de elegir 1 pide el nombre del archivo. Escriba `ejercicio2.txt`, o basta con
-`ejercicio2`: la extensión `.txt` se agrega sola. Por cada línea imprime la traza completa
-de la pila y el veredicto.
+Después de elegir 1 pide el nombre del archivo. Escriba `ejercicio2`: igual que en el otro
+menú, la extensión y la carpeta `datos/` se resuelven solas. Por cada línea imprime la
+traza completa de la pila y el veredicto.
 
 ### Salida esperada
 
@@ -373,33 +481,44 @@ Expresion: (a|b]
 >> Resultado: NO BALANCEADA -> ']' en la posicion 4 no coincide con el simbolo en el tope de la pila ('(')
 ```
 
+### Usarlo desde Python
+
+```python
+from src.balanceo import verificar_balanceo, balanceada
+from src.reportes import tabla_balanceo
+
+balanceada("(a{b})")                 # True
+verificar_balanceo("(a|b]")          # (False, "']' en la posicion 4 ...", [pasos])
+print(tabla_balanceo("(a{b})")[1])   # la traza completa, ya formateada
+```
+
 ### Detalles
 
-- Se verifican los tres pares: `()`, `[]` y `{}`. Cualquier otro caracter no toca la pila.
+- Se verifican los tres pares: `()`, `[]` y `{}`, que salen de `PARES` en `src/tokens.py`.
+  Cualquier otro caracter no toca la pila.
 - Los caracteres escapados con `\` se ignoran: en `\(a\)` no hay nada que balancear.
 - La traza se corta en el primer error. Un símbolo de apertura que nunca se cierra se
   reporta al final: *"quedaron simbolos sin cerrar en la pila"*.
 
-> **Nota.** A diferencia de `shuntingyard.py`, este verificador no interpreta clases de
+> **Nota.** A diferencia del Shunting Yard, este verificador no interpreta clases de
 > caracteres: `[({]` se reporta como no balanceada, aunque el shunting yard la aceptaría
 > como una clase que contiene `(` y `{`. Es intencional — el ejercicio 2 es un verificador
-> de balanceo genérico, no un parser de expresiones regulares.
+> de balanceo genérico, no un parser de expresiones regulares. Por eso `src/parseo.py` no
+> llama a `src/balanceo.py`: comparten los símbolos, no las reglas.
 
-Las llaves `{}` solo son significativas aquí. En `shuntingyard.py` son símbolos literales
+Las llaves `{}` solo son significativas aquí. Para el Shunting Yard son símbolos literales
 del alfabeto (no agrupan y no son cuantificador `{n,m}`), así que `a{2,3}` se convierte sin
 error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este programa y no allá.
 
 ## Estructura
 
-- `shuntingyard.py` — ejercicio 3 Lab 2: implementación completa y menú interactivo.
-- `expresiones.txt` — expresiones de ejemplo para el ejercicio 3 Lab 2.
-- `arbol.py` — construcción y dibujo del AST a partir del postfix Lab 3.
-- `ast/` — carpeta donde la opción 3 guarda los `.svg`.
-- `afn.py` — Lab 4: AFN por Thompson a partir del AST, su dibujo y su simulación.
-- `afn.txt` — las cuatro expresiones del Lab 4.
-- `afn/` — carpeta donde la opción 4 guarda los `.svg`.
-- `Balanceo.py` — ejercicio 2 Lab 2: verificador de balanceo con traza de la pila.
-- `ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
+- `main.py` — el menú del Shunting Yard: la opción, el archivo y la cadena `w`. Nada más.
+- `Balanceo.py` — el menú del ejercicio 2, igual de delgado.
+- `src/` — el paquete con todo el algoritmo (vea la tabla del inicio).
+- `datos/expresiones.txt` — expresiones de ejemplo para el ejercicio 3 Lab 2.
+- `datos/afn.txt` — las cuatro expresiones del Lab 4, que sirven igual para el AFD.
+- `datos/ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
+- `ast/`, `afn/`, `afd/`, `afd_min/` — carpetas donde se guardan los `.svg` de cada opción.
 - `requirements.txt` — dependencias (`svgling`, `graphviz`).
 - `Dockerfile` y `compose.yaml` — imagen con `dot` ya instalado, para correr el proyecto
   sin instalar Graphviz en la máquina.
