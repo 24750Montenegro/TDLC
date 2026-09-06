@@ -1,5 +1,7 @@
 # Shunting Yard — Infix a Postfix
 
+**Integrantes:** Alejandra Avilés · Joel Nerio · Juan Montenegro
+
 Dos programas independientes, cada uno con su propio menú:
 
 - **`main.py`**  — el menú del Shunting Yard: pide la opción, el archivo y la cadena `w`.
@@ -188,16 +190,33 @@ UnicodeEncodeError: 'charmap' codec can't encode character 'ε'
 | Símbolo | Significado |
 |---|---|
 | `\|` | alternancia (or) |
-| `.` | concatenación (se inserta automáticamente; escríbala como `\.` si quiere un punto literal) |
+| `.` | punto literal, un símbolo más del alfabeto (`\.` es lo mismo) |
 | `^` | operador binario de menor precedencia que los unarios |
 | `?` | cero o una repetición |
 | `*` | cero o más repeticiones (Kleene) |
 | `+` | una o más repeticiones |
 | `( )` | agrupación |
 | `[ ]` | clase de caracteres: `[ae03]` equivale a `(a\|e\|0\|3)` |
-| `\` | escape: `\(` es un paréntesis literal, `\.` un punto literal |
+| `\` | escape: `\(` es un paréntesis literal, `\*` un asterisco literal |
 
-Precedencia (de menor a mayor): `(` `[` < `|` < `.` < `^` < `?` `*` `+`
+### La concatenación no se escribe
+
+**La concatenación es implícita**: se escribe `ab`, no `a.b`, y el programa la inserta sola
+como el operador `.` antes de convertir a postfix. Por eso el `.` que usted escriba es
+siempre un **punto literal**, igual que `\.`: es el símbolo `.` del alfabeto, no un
+operador. En `[ae03]+@[ae03]+.(com|net|org)` ese `.` es el punto del dominio, y por eso la
+expresión formateada lo muestra como `\.`:
+
+```
+Expresión: [ae03]+@[ae03]+.(com|net|org)
+Formateada(infix): [a|e|0|3]+.@.[a|e|0|3]+.\..(c.o.m|n.e.t|o.r.g)
+```
+
+Los `.` sueltos de esa línea son las concatenaciones que insertó el programa; el `\.` es el
+punto que usted escribió.
+
+Precedencia (de menor a mayor): `(` `[` < `|` < `.` < `^` < `?` `*` `+`, donde ese `.` es
+la concatenación ya insertada.
 
 Dentro de una clase `[ ]` todo es literal salvo el `]` que la cierra y el `\` que escapa.
 
@@ -247,7 +266,8 @@ dibuja el nodo `+` o `?` tal cual, sin expandir.
 ### El dibujo
 
 - La concatenación se pinta como `·`: un punto en la línea base se pierde entre las aristas.
-  El `\.` literal no cambia, y los demás caracteres escapados también conservan su `\`.
+  Así se distingue del punto literal, que se dibuja como `\.` igual que los demás
+  caracteres escapados.
 - Los operadores van en rojo y negrita, los operandos en verde oliva, el `ε` en verde y las
   aristas en azul.
 - Se guarda un `.svg` por expresión en `ast/`, numerados en el orden del archivo
