@@ -2,21 +2,33 @@
 
 **Integrantes:** Alejandra Avilés · Joel Nerio · Juan Montenegro
 
-Dos programas independientes, cada uno con su propio menú:
+---
 
-- **`main.py`**  — el menú del Shunting Yard: pide la opción, el archivo y la cadena `w`.
-- **`Balanceo.py`**  — el menú del verificador de balanceo de `()`, `[]` y `{}`.
+## Video de demostración del proyecto
 
-Ninguno de los dos tiene algoritmo adentro: los dos arman su menú sobre el paquete
-**`src/`**, donde vive todo. Cada módulo hace una sola cosa, así que se puede usar suelto
-desde Python sin pasar por el menú:
+<div align="center">
+
+
+
+### **[https://youtu.be/_EtjkIjiTiU](https://youtu.be/_EtjkIjiTiU)**
+
+
+</div>
+
+---
+
+Un solo programa, **`main.py`**: el menú que pide la opción, el archivo y la cadena `w`.
+
+No tiene algoritmo adentro; solo arma su menú sobre el paquete **`src/`**, donde vive
+todo. Cada módulo hace una sola cosa, así que se puede usar suelto desde Python sin pasar
+por el menú:
 
 | Módulo | Qué hace |
 |---|---|
 | `src/tokens.py` | la definición de los símbolos: operadores, precedencias, pares que se balancean, `ε` y el escape |
 | `src/parseo.py` | escapes, concatenación explícita, validación y formateo de la expresión |
 | `src/shuntingyard.py` | el algoritmo Shunting Yard de Dijkstra: infix → postfix y su traza |
-| `src/balanceo.py` | verificación de balanceo con una pila (el ejercicio 2), reutilizable |
+| `src/balanceo.py` | verificación de balanceo de `()`, `[]` y `{}` con una pila |
 | `src/arbol.py` | el AST a partir del postfix |
 | `src/automata.py` | clase base `Automata`, común al AFN y al AFD |
 | `src/afn.py` | AFN por Thompson y su simulación por conjuntos de estados |
@@ -25,13 +37,16 @@ desde Python sin pasar por el menú:
 | `src/dibujo_automata.py` | dibujo del AFN y del AFD con `graphviz` |
 | `src/reportes.py` | los textos que se imprimen: tablas, transiciones y trazas |
 | `src/archivos.py` | lectura de los `.txt` y creación de las carpetas de salida |
-| `src/aplicacion.py` | une todo lo anterior: es lo que llama cada opción de los menús |
+| `src/aplicacion.py` | une todo lo anterior: es lo que llama cada opción del menú |
 
 Los `.txt` de ejemplo están en **`datos/`**, y las imágenes se generan en `ast/`, `afn/`,
 `afd/` y `afd_min/`.
 
 ## Video de ejecución
 Demostración de  programas corriendo:
+
+#### Proyecto - Demostración final
+**https://youtu.be/_EtjkIjiTiU**
 
 #### Lab 2 - Balanceo y ShuntingYard
 
@@ -455,28 +470,22 @@ elige qué autómatas construir (`'afn'`, `'afd'`, `'min'`), `abrir=True` abre c
 generarlo y `detalle=False` imprime solo el resumen y el veredicto, sin las transiciones ni
 la traza.
 
-## Cómo ejecutar el verificador de balanceo
+## El verificador de balanceo (`src/balanceo.py`)
 
-`Balanceo.py` resuelve el ejercicio 2 y es solo el menú: la verificación está en
-`src/balanceo.py` y la traza en `src/reportes.py`. El repositorio incluye
+El verificador de balanceo de `()`, `[]` y `{}` — el ejercicio 2 del Lab 2 — ya no es un
+programa aparte: es un módulo más de `src/`, sin menú propio. La verificación está en
+`src/balanceo.py`, la traza en `src/reportes.py` y el recorrido de un archivo entero en
+`verificar_archivo()` de `src/aplicacion.py`. El repositorio incluye
 `datos/ejercicio2.txt` con las expresiones de prueba de ese inciso (varias están
 deliberadamente desbalanceadas).
 
-```
-python Balanceo.py
+```python
+from src.aplicacion import verificar_archivo
+
+verificar_archivo("datos/ejercicio2.txt")
 ```
 
-Aparece un menú:
-
-```
-========== Ejercicio 2: Verificador de balanceo ==========
-1. Leer el  archivo y verificar balanceo
-2. Salir
-```
-
-Después de elegir 1 pide el nombre del archivo. Escriba `ejercicio2`: igual que en el otro
-menú, la extensión y la carpeta `datos/` se resuelven solas. Por cada línea imprime la
-traza completa de la pila y el veredicto.
+Por cada línea imprime la traza completa de la pila y el veredicto.
 
 ### Salida esperada
 
@@ -528,16 +537,15 @@ print(tabla_balanceo("(a{b})")[1])   # la traza completa, ya formateada
 
 Las llaves `{}` solo son significativas aquí. Para el Shunting Yard son símbolos literales
 del alfabeto (no agrupan y no son cuantificador `{n,m}`), así que `a{2,3}` se convierte sin
-error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este programa y no allá.
+error a `a{.2.,.3.}.`; por eso el balanceo de llaves se comprueba en este módulo y no allá.
 
 ## Estructura
 
-- `main.py` — el menú del Shunting Yard: la opción, el archivo y la cadena `w`. Nada más.
-- `Balanceo.py` — el menú del ejercicio 2, igual de delgado.
+- `main.py` — el único menú: la opción, el archivo y la cadena `w`. Nada más.
 - `src/` — el paquete con todo el algoritmo (vea la tabla del inicio).
 - `datos/expresiones.txt` — expresiones de ejemplo para el ejercicio 3 Lab 2.
 - `datos/afn.txt` — las cuatro expresiones del Lab 4, que sirven igual para el AFD.
-- `datos/ejercicio2.txt` — expresiones de ejemplo para el ejercicio 2 Lab 2.
+- `datos/ejercicio2.txt` — expresiones de ejemplo para el verificador de balanceo.
 - `ast/`, `afn/`, `afd/`, `afd_min/` — carpetas donde se guardan los `.svg` de cada opción.
 - `requirements.txt` — dependencias (`svgling`, `graphviz`).
 - `Dockerfile` y `compose.yaml` — imagen con `dot` ya instalado, para correr el proyecto
