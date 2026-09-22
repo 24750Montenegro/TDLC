@@ -56,5 +56,12 @@ El archivo 'grammars/grammar_invalid' tiene el propósito de mostrar qué hace e
 S=A
 '''
 
+
+para correr el programa: se necesita estar en \lab7 en terminal ->
+
+(Grammar1.txt) python src/main.py grammars/grammar1.txt
+(Grammar2.txt) python src/main.py grammars/grammar2.txt
+(Grammar_invalid.txt) python src/main.py grammars/grammar_invalid.txt
+
 ## Vídeo de demostración
-[Ver vídeo de demostración](https://www.youtube.com/watch?v=XXXXXXXXXXXXX)
+[Ver vídeo de demostración](https://youtu.be/sP0WcQ0Xuw0)
