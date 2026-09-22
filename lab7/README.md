@@ -30,6 +30,8 @@ Las operaciones implementadas son:
 - Git, si se desea clonar o contribuir al repositorio.
 
 El programa utiliza únicamente módulos incluidos en la biblioteca estándar de Python. No requiere paquetes externos.
+## Vídeo de demostración
+[Ver vídeo de demostración](https://youtu.be/sP0WcQ0Xuw0)
 
 ## Estructura del repositorio
 
@@ -63,5 +65,5 @@ para correr el programa: se necesita estar en \lab7 en terminal ->
 (Grammar2.txt) python src/main.py grammars/grammar2.txt
 (Grammar_invalid.txt) python src/main.py grammars/grammar_invalid.txt
 
-## Vídeo de demostración
-[Ver vídeo de demostración](https://youtu.be/sP0WcQ0Xuw0)
+
+
