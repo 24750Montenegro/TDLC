@@ -1,6 +1,7 @@
 # Laboratorio No. 7
-
+##### (ejercicio 1 en doc\Lab 7 ejercicio 1.pdf)
 Implementación del Ejercicio No. 2 del Laboratorio No. 7 del curso de Teoría de la Computación.
+
 
 El programa permite leer gramáticas libres de contexto desde archivos de texto, validar su formato, encontrar símbolos anulables y eliminar las producciones-ε.
 
